@@ -56,4 +56,31 @@ p(\bm{y}^{pred}|\bm{y}) = \int p(\bm{y}^{pred}|\bm{\theta})p(\bm{\theta}|\bm{y})
 where $p(y|x)$ denotes the conditional density of the random variable $y$ given the random variable $x$. Given a simulation from $p(\bm{\theta}|\bm{y})$, the posterior distribution of the model parameters, using e.g. MCMC, this density is easy to approximate simply by simulating draws of the predicted $\bm{y}^{pred}$ for each parameter value simulated. More generally, we can fix some of the parameter values and let others vary to, e.g., isolate the effect of increasing the mean of the time series. 
 
 Fitting the models should be straightforward, at least in theory. STAN is probably great for what we are trying to do, which means way less work on our end. The only wrinkles here are 1) now we have to pick prior distributions, which may be controversial, but we can easily do some robustness checks with different priors and 2) potential big data concerns.
+
+\section{A Simple Example}
+
+In this example simulation we assume that the transaction data process $x_t$ follows a continuous time random walk with drift with parameters $\mu$ and $\sigma$, that is
+\[
+x_t - x_s \sim N((t-s)\mu, (t-s)\sigma^2)
+\]
+for $t > s$. So $dx_t = \mu dt + \sigma d B_t$ where $B_t$ is Brownian motion. Using a simulation, Table \ref{tab:bmprob} contains Monte Carlo estimates of the probability that a block fills up under a variety of choices of $\mu$ and $\sigma$. The current average transaction data rate per minute  is $\mu=0.04$ MBs. As $\sigma$ increases the probability of a block filling increases, though when $\sigma$ is close to zero an increase in $\sigma$ may cause the probability to decrease slightly. For most of the range, however, increasing $\sigma$ increases the probability that a block fills up. 
+
+% latex table generated in R 3.2.2 by xtable 1.7-4 package
+% Tue Sep 22 16:26:38 2015
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrrrrr}
+  \hline
+ & $\sigma = 0$ & $\sigma = 0.001$ & $\sigma = 0.01$ & $\sigma = 0.1$ & $\sigma = 1$ & $\sigma = 10$ & $\sigma = 100$ & $\sigma = 1000$ \\ 
+  \hline
+$\mu = 0.035$ & 0.0594 & 0.0594 & 0.0597 & 0.0927 & 0.3574 & 0.4822 & 0.4979 & 0.4994 \\ 
+  $\mu = 0.04$ & 0.0836 & 0.0835 & 0.0839 & 0.1149 & 0.3624 & 0.4824 & 0.4978 & 0.5005 \\ 
+  $\mu = 0.045$ & 0.1098 & 0.1098 & 0.1103 & 0.1367 & 0.3680 & 0.4829 & 0.4977 & 0.4995 \\ 
+  $\mu = 0.05$ & 0.1366 & 0.1366 & 0.1370 & 0.1596 & 0.3739 & 0.4837 & 0.4983 & 0.5003 \\ 
+   \hline
+\end{tabular}
+\caption{Approximate probability of filling of a block under various choices of $\mu$ and $\sigma$.}
+\label{tab:bmprob}
+\end{table}
+
 \end{document}
