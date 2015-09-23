@@ -34,4 +34,25 @@ dbFetch(res)
 dbClearResult(res)
 
 
+#let's count how many blocks are in our db
+res <- dbSendQuery(con, "select count(*) from blocks")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+dbFetch(res)
+dbClearResult(res)
+
+
+#let's see the timestamp of the most recent block in our database
+res <- dbSendQuery(con, "select time from blocks order by height desc limit 1")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+time <- dbFetch(res)
+as.POSIXct(time$time[1], origin="1970-01-01")
+dbClearResult(res)
+
+
 dbDisconnect(con)
