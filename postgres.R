@@ -55,4 +55,26 @@ as.POSIXct(time$time[1], origin="1970-01-01")
 dbClearResult(res)
 
 
+#let's see the timestamp of the most recent block in our database
+res <- dbSendQuery(con, "select height, time, size, transactions_count from blocks")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+blockstats <- dbFetch(res)
+dbClearResult(res)
+
+# I'm sure this is horrible code...
+blockstats$elapsed_time <- blockstats$time - c(NA,blockstats$time[-length(blockstats$time)])
+# for some reason this results in some negative values for elapsed time. not sure why that might be
+# maybe some of the computers that discovered blocks had clocks that were off? by up to 2 hours?
+
+blockstats$txpermin <- blockstats$transactions_count*60/blockstats$elapsed_time
+blockstats$bytespermin <- blockstats$size*60/blockstats$elapsed_time
+
+library(Hmisc)
+describe(blockstats) 
+
+
+
 dbDisconnect(con)
