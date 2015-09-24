@@ -55,7 +55,7 @@ as.POSIXct(time$time[1], origin="1970-01-01")
 dbClearResult(res)
 
 
-#let's see the timestamp of the most recent block in our database
+#let's calculate some block stats
 res <- dbSendQuery(con, "select height, time, size, transactions_count from blocks")
 while(!dbHasCompleted(res)){
   chunk <- dbFetch(res, n = 5)
