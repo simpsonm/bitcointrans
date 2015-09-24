@@ -68,12 +68,31 @@ dbClearResult(res)
 blockstats$elapsed_time <- blockstats$time - c(NA,blockstats$time[-length(blockstats$time)])
 # for some reason this results in some negative values for elapsed time. not sure why that might be
 # maybe some of the computers that discovered blocks had clocks that were off? by up to 2 hours?
+# might be a problem for only early in the chain, though
 
 blockstats$txpermin <- blockstats$transactions_count*60/blockstats$elapsed_time
 blockstats$bytespermin <- blockstats$size*60/blockstats$elapsed_time
 
 library(Hmisc)
-describe(blockstats) 
+describe(blockstats)
+
+
+#let's calculate some block stats for the last 1000 blocks in our db
+res <- dbSendQuery(con, "select height, time, size, transactions_count from blocks order by height desc limit 1000")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+blockstats1k <- dbFetch(res)
+dbClearResult(res)
+blockstats1k <-blockstats1k[order(blockstats1k$height),] # re-sorting because we selected blocks in reverse order
+blockstats1k$elapsed_time <- blockstats1k$time - c(NA,blockstats1k$time[-length(blockstats1k$time)])
+blockstats1k$txpermin <- blockstats1k$transactions_count*60/blockstats1k$elapsed_time
+blockstats1k$bytespermin <- blockstats1k$size*60/blockstats1k$elapsed_time
+
+library(Hmisc)
+describe(blockstats1k)
+plot(blockstats1k$elapsed_time, blockstats1k$size, main="Block size v. time between blocks", xlab="Seconds since prior block discovery", ylab="bytes", pch=19)
 
 
 
