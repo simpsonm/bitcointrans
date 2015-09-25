@@ -5,3 +5,4 @@
 *.lb
 *.synctex.gz
 .Rapp.history
+.Rhistory
