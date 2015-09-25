@@ -64,8 +64,9 @@ while(!dbHasCompleted(res)){
 blockstats <- dbFetch(res)
 dbClearResult(res)
 
-# I'm sure this is horrible code...
-blockstats$elapsed_time <- blockstats$time - c(NA,blockstats$time[-length(blockstats$time)])
+# I'm sure this is horrible code...  
+blockstats$elapsed_time <-  blockstats$time - c(NA,blockstats$time[-length(blockstats$time)])
+## cleaner but slower: c(NA, diff(blockstats$time))
 # for some reason this results in some negative values for elapsed time. not sure why that might be
 # maybe some of the computers that discovered blocks had clocks that were off? by up to 2 hours?
 # might be a problem for only early in the chain, though
