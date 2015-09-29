@@ -22,7 +22,7 @@ model {
   //  t[1] ~ normal(tau[1], sigma) T[lb[1],]; 
   //  x[1] ~ gamma(nprev, lambda);  // uses shape/rate parameterization
   for(i in 1:nobs){
-    t[i] ~ lognormal(log(tau[i]) - sigma^2/2, sigma) T[fmax(lb[i],0),]; 
+    t[i] ~ lognormal(log(tau[i] - sigma^2/2), sigma) T[fmax(lb[i],0),]; 
     x[i] ~ exponential(lambda);
   }
   sigma ~ cauchy(0, 2.5);
