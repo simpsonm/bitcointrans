@@ -13,6 +13,8 @@ sigs <- c(0,10^(1:7-4))
 out <- matrix(0,nrow=length(mus),ncol=length(sigs))
 colnames(out) <- paste("$\\sigma = ", sigs, "$", sep="")
 rownames(out) <- paste("$\\mu = ", mus, "$", sep="")
+
+arrive <- rexp(n, lambda)
 for(i in 1:length(mus)){
   for(j in 1:length(sigs)){
     mu <- mus[i]
