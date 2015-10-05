@@ -64,6 +64,26 @@ The simplest way to compute parameter estimates based on fitting model, e.g. max
 
 This approach has two major shortfalls: 1) it ignores parameter uncertainty, and 2) it assumes that the other parameters will remain constant as $\mu$ increases. We can mitigate 1) while making 2) if not worse, different. Specifically, suppose we fit the model and have access to the full (approximate) posterior distribution of the model parameters. Then we can simulate from the posterior of the parameters and for each simulated parameter, simulate the model in order to estimate the probability of a block filling up. This approach takes into account parameter uncertainty but assumes that our uncertainty about the other parameters would be unchanged if the location of $\mu$'s distribution were different, e.g. its mean $\bar{\mu}$. We estimate the probability of a block filling using both approaches, but because of the required assumptions the estimates become less credible for values of $\mu$ or $\bar{\mu}$ further away from the estimated values.
 
+Table \ref{tab:probsims} contains estimates of the probability of a filled block under a variety of assumptions, using parameter estimates of the posterior distribution of the model using 1000 contiguous blocks ending with block $253,221$ from August 20, 2013 arriving at about 11:39 a.m.
+% latex table generated in R 3.2.2 by xtable 1.7-4 package
+% Mon Oct  5 14:56:54 2015
+\begin{table}[ht]
+\centering
+\begin{tabular}{llll}
+  \hline
+$\mu - \hat{\mu}$ & $P_{\bar{\mu}}$ & $P_{\mu^{(0.5)}}$ & $P_{\mathrm{post}}$ \\ 
+  \hline
+0 & 0.01 & 0.01 & 0.00 \\ 
+  0.01 & 0.03 & 0.03 & 0.03 \\ 
+  0.05 & 0.23 & 0.23 & 0.22 \\ 
+  0.1 & 0.42 & 0.42 & 0.42 \\ 
+  0.5 & 0.82 & 0.82 & 0.83 \\ 
+   \hline
+\end{tabular}
+\caption{Estimated probability of a filled block under a variety of assumptions. From the posterior distribution the mean is $\bar{\mu} = 0.0179$ and the median is $\mu^{(0.5)} = 0.0174$. The value of $\mu - \hat{\mu}$ is the amount added to the estimated value of $\mu$ for the purposes of the simulation, $P_{\bar{\mu}}$ is the probability of a filled block using posterior means for parameter estimates, $P_{\mu^{(0.5)}}$ is the probability of a filled block using posterior medians, and $P_{\mathrm{post}}$ is the probability of a filled block using the full posterior distribution.}
+\label{tab:probsims}
+\end{table}
+
 \section{Simulation Exercises}
 
 Each simulation exercise starts with specifying a distribution for $dx_t$. There are three basic categories here: deterministic, i.e. fixed at the mean rate, independent, and temporally dependent. There is actually some interesting room in the deterministic class --- for example, $dx_t$ could be increasing in $t$, or at least not constant. This behavior can be captured in a more realistic stochastic environment, so we will focus on that. 
@@ -97,24 +117,25 @@ In this example simulation we assume that the transaction data process $x_t$ fol
 \[
 x_t - x_s \sim N((t-s)\mu, (t-s)\sigma^2)
 \]
-for $t > s$. So $dx_t = \mu dt + \sigma d B_t$ where $B_t$ is Brownian motion. Using a simulation, Table \ref{tab:bmprob} contains Monte Carlo estimates of the probability that a block fills up under a variety of choices of $\mu$ and $\sigma$. The current average transaction data rate per minute  is $\mu=0.04$ MBs. As $\sigma$ increases the probability of a block filling increases, though when $\sigma$ is close to zero an increase in $\sigma$ may cause the probability to decrease slightly. For most of the range, however, increasing $\sigma$ increases the probability that a block fills up. 
+for $t > s$. So $dx_t = \mu dt + \sigma d B_t$ where $B_t$ is Brownian motion. Using a simulation, Table %\ref{tab:bmprob}
+ contains Monte Carlo estimates of the probability that a block fills up under a variety of choices of $\mu$ and $\sigma$. The current average transaction data rate per minute  is $\mu=0.04$ MBs. As $\sigma$ increases the probability of a block filling increases, though when $\sigma$ is close to zero an increase in $\sigma$ may cause the probability to decrease slightly. For most of the range, however, increasing $\sigma$ increases the probability that a block fills up. 
 
 % latex table generated in R 3.2.2 by xtable 1.7-4 package
 % Tue Sep 22 16:26:38 2015
-\begin{table}[ht]
-\centering
-\begin{tabular}{lrrrrrrrr}
-  \hline
- & $\sigma = 0$ & $\sigma = 0.001$ & $\sigma = 0.01$ & $\sigma = 0.1$ & $\sigma = 1$ & $\sigma = 10$ & $\sigma = 100$ & $\sigma = 1000$ \\ 
-  \hline
-$\mu = 0.035$ & 0.0594 & 0.0594 & 0.0597 & 0.0927 & 0.3574 & 0.4822 & 0.4979 & 0.4994 \\ 
-  $\mu = 0.04$ & 0.0836 & 0.0835 & 0.0839 & 0.1149 & 0.3624 & 0.4824 & 0.4978 & 0.5005 \\ 
-  $\mu = 0.045$ & 0.1098 & 0.1098 & 0.1103 & 0.1367 & 0.3680 & 0.4829 & 0.4977 & 0.4995 \\ 
-  $\mu = 0.05$ & 0.1366 & 0.1366 & 0.1370 & 0.1596 & 0.3739 & 0.4837 & 0.4983 & 0.5003 \\ 
-   \hline
-\end{tabular}
-\caption{Approximate probability of filling of a block under various choices of $\mu$ and $\sigma$.}
-\label{tab:bmprob}
-\end{table}
+%\begin{table}[ht]
+%\centering
+%\begin{tabular}{lrrrrrrrr}
+%  \hline
+% & $\sigma = 0$ & $\sigma = 0.001$ & $\sigma = 0.01$ & $\sigma = 0.1$ & $\sigma = 1$ & $\sigma = 10$ & $\sigma = 100$ & $\sigma = 1000$ \\ 
+%  \hline
+%$\mu = 0.035$ & 0.0594 & 0.0594 & 0.0597 & 0.0927 & 0.3574 & 0.4822 & 0.4979 & 0.4994 \\ 
+%  $\mu = 0.04$ & 0.0836 & 0.0835 & 0.0839 & 0.1149 & 0.3624 & 0.4824 & 0.4978 & 0.5005 \\ 
+%  $\mu = 0.045$ & 0.1098 & 0.1098 & 0.1103 & 0.1367 & 0.3680 & 0.4829 & 0.4977 & 0.4995 \\ 
+%  $\mu = 0.05$ & 0.1366 & 0.1366 & 0.1370 & 0.1596 & 0.3739 & 0.4837 & 0.4983 & 0.5003 \\ 
+%   \hline
+%\end{tabular}
+%\caption{Approximate probability of filling of a block under various choices of $\mu$ and $\sigma$%.}
+%\label{tab:bmprob}
+%\end{table}
 
 \end{document}

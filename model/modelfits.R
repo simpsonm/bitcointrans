@@ -1,6 +1,4 @@
 ## this is mostly a scratchpad right now
-
-
 library(DBI)
 library(rstan)
 
@@ -9,6 +7,8 @@ con <- dbConnect(RPostgres::Postgres(),dbname = 'toshi',
                  port = 5432,
                  user = 'readonly',
                  password = 'password')
+
+dbListTables(con)
 
 res <- dbSendQuery(con, "select height, time, size, transactions_count from blocks order by height desc limit 1011")
 while(!dbHasCompleted(res)){
@@ -22,6 +22,8 @@ timedata <- timedata[order(timedata$height),]
 timedata$elapsed_time <- timedata$time - c(NA,timedata$time[-length(timedata$time)])
 timedata$min <- timedata$time/60 ## convert to minutes
 
+save(timedata, file = "timedata.RData")
+load("timedata.RData")
 
 nobs <- 1000
 timedatashort <- timedata[(1000 - nobs + 1):1011,]
@@ -43,23 +45,62 @@ gamlist <- list(nobs = nobs, t = times, lb = lbs, lambda = 1/10, mb = mbs, sigpa
 fit <- stan(file = 'lognormalgamma.stan', data = gamlist, iter=1, chains=1)
 ## initializes the model and does some basic checks
 
-system.time(fit2 <- stan(fit = fit, data = gamlist, iter=200, chains=1, control = list(adapt_delta = 0.9, max_treedepth = 13)))
+system.time(fit2 <- stan(fit = fit, data = gamlist, iter=2000, chains=4, control = list(adapt_delta = 0.9, max_treedepth = 13)))
 
+save(fit2, file="loggammafit.RData")
 
-gamgamlist <- list(nobs = nobs, t = times/60/24/7/52, lb = lbs/60/24/7/52, lambda = 1/10/60/24/7/52, mb = mbs, betapars = c(1, 1), apars=c(1, 1), bpars=c(1,1))
+load("loggammafit.RData")
 
-initlist <- list(list(x = rep(1, length(times)), a = 1, b = 1, beta = 1))
+rstan::traceplot(fit2, pars=c('a', 'b', 'mu', 'sigma', 'lp__'), ncol=1)
 
-fit <- stan(file = 'gammagamma.stan', data = gamgamlist, iter = 1, chains = 1)
-
-system.time(fit2 <- stan(fit = fit, data = gamgamlist, iter=1, chains=1, control = list(adapt_delta = 0.9, max_treedepth = 13)))
-
-rstan::traceplot(fit2, pars=c('a', 'b', 'mu', 'beta'), ncol=1)
-
-system.time(fit2 <- stan(fit = fit, data = gamlist, iter=4000, chains=4))
-
-
-
+print(fit2, pars=c('a', 'b', 'mu', 'sigma', 'lp__'), digits = 4)
 
 fitex <- extract(fit2)
 
+
+
+library(MCMCpack)
+
+niter <- 4000
+parout <- cbind(mu=fitex$mu, b=fitex$b, sigma=fitex$sigma)
+parsum <- summary(mcmc(parout))
+
+mus <- c(0, .01, .05, .1, .5)
+K <- length(mus)
+out <- matrix(0, ncol=3, nrow=K)
+
+
+for(i in 1:K){
+  ## use posterior means
+  pars <- parsum[[1]][,1]
+  muhat <- pars[1]
+  bhat <- pars[2]
+  sigmahat <- pars[3]
+  xs <- rexp(niter, 1/10)
+  taus <- cumsum(xs)
+  mbs <- rgamma(niter, (muhat + mus[i])*bhat*xs, bhat)
+  out[i,1] <- mean(mbs>1)
+
+  ## use posterior medians
+  pars <- parsum[[2]][,3]
+  muhat <- pars[1]
+  bhat <- pars[2]
+  sigmahat <- pars[3]
+  xs <- rexp(niter, 1/10)
+  taus <- cumsum(xs)
+  mbs <- rgamma(niter, (muhat + mus[i])*bhat*xs, bhat)
+  out[i,2] <- mean(mbs>1)
+
+  ## use full posterior
+  xs <- rexp(niter, 1/10)
+  taus <- cumsum(xs)
+  mbs <- rgamma(niter, (fitex$mu + mus[i])*fitex$b*xs, fitex$b)
+  out[i,3] <- mean(mbs>1)
+}
+
+colnames(out) <- c("Mean", "Median", "Posterior")
+rownames(out) <- mus
+
+library(xtable)
+
+xtable(out)
