@@ -25,7 +25,7 @@ timedata$min <- timedata$time/60 ## convert to minutes
 save(timedata, file = "timedata.RData")
 load("timedata.RData")
 
-nobs <- 1000
+nobs <- 100
 timedatashort <- timedata[(1000 - nobs + 1):1011,]
 lbs <- rep(0,nobs)
 for(i in 1:nobs){
@@ -104,3 +104,22 @@ rownames(out) <- mus
 library(xtable)
 
 xtable(out)
+
+
+
+
+
+
+omega <- 2*pi/(60*24)
+
+gamlist <- list(nobs = nobs, t = times, lb = lbs, lambda = 1/10, mb = mbs, sigpars = c(1, 1), sigepspars = c(1, 1), bpars=c(1,1), omega=omega, alphamns=rep(0,3), alphasds=rep(1,3), rhopars=c(1,1), phipar = 2*pi, lgam0pars = c(0, 1))
+## lambda = 1 / mean block discovery time = 1/10 minutes
+
+fit <- stan(file = 'seasonallognormalgamma2.stan', data = gamlist, iter=1, chains=1)
+
+system.time(fit2 <- stan(fit = fit, data = gamlist, iter=100, chains=1, control = list(adapt_delta = 0.98, max_treedepth = 12)))
+
+traceplot(fit2, pars=c('b', 'sigma', 'phi', 'sigeps', 'alpha0', 'alpha1', 'alpha2', 'rho'))
+
+##, control = list(adapt_delta = 0.98, max_treedepth = 14)))
+

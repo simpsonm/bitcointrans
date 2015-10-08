@@ -89,10 +89,10 @@ The full model can then be written as
 \begin{align*}
 t_k|t_{1:(k-1)}, \tau_{1:K} &\sim LN(\log(\tau_k) - \sigma^2/2, \sigma)\mathbbm{1}(t_k > m_k)\\
 x_{\tau_{k+1}} - x_{\tau_{k}}|\tau_{1:K} & \stackrel{ind}{\sim} G\left(\beta(\gamma_{\tau_k + \delta_k} - \gamma_{\tau_k}),\beta\right)\\
-\gamma_{\tau_k + \delta_k}|\gamma_{\tau_k} & \sim LN(\left(e^{-\phi\delta}(\log\gamma_{\tau_k} - \mu_{\tau_k}) + \mu_{\tau_k + \delta_k}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right)\\
+\gamma_{\tau_k + \delta_k}|\gamma_{\tau_k} & \sim LN\left(e^{-\phi\delta}(\log\gamma_{\tau_k} - \mu_{\tau_k}) + \mu_{\tau_k + \delta_k}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right)\\
 \delta_{k} = \tau_{k+1} - \tau_{k} &\stackrel{iid}{\sim} Exp(1/10)
 \end{align*}
-for blocks $k=1,2,\dots,N$ where $\mu_{\tau}$ is a parameterized deterministic function of $\tau$. For example, a trend with seasonal variability can be obtained via $\mu_{\tau} = \alpha_0 + \alpha_1\tau + \alpha_2\sin(2\pi f \tau + \lambda)$ where $alpha_{0}$, $\alpha_1$, $\alpha_2$, and $\lambda$ are uknown parameters and $f$ is the known frequency of the seasonal effect.
+for blocks $k=1,2,\dots,N$ where $\mu_{\tau}$ is a parameterized deterministic function of $\tau$. For example, a trend with seasonal variability can be obtained via $\mu_{\tau} = \alpha_0 + \alpha_1\tau + \alpha_2\sin(2\pi f \tau + \psi)$ where $alpha_{0}$, $\alpha_1$, $\alpha_2$, and $\psi$ are uknown parameters and $f$ is the known frequency of the seasonal effect.
 
 \section{The key question}
 As Bitcoin becomes more popular, the transaction data rate increases. Since existing Bitcoin rules limit the number of transactions per block to one MB, at some point the blocks will begin filling up. The purpose of modeling Bitcoin's transaction data rate is to estimate the probability of seeing a full block under a variety of assumptions. Starting from the base model above, the quantity we are interested in is thus
