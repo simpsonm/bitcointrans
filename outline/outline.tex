@@ -11,107 +11,167 @@
 
 \abstract{As Bitcoin's popularity rises, so does the number of transactions per block. Existing Bitcoin rules limit the number of transactions per block to 1 megabytes’ worth. Recent average transaction rates have been about 40 percent of that limit. But because Bitcoin blocks are discovered according to a stochastic Poisson process, some blocks may reach the limit even if the average is well below the limit. This paper models the percentage of blocks that reach the 1MB limit under various average transaction rates. In our most basic model, we derive a formula for that percentage as a function of constant transaction rates. We also estimate how that percentage changes when transaction rates exhibit minute-to-minute variability along specified, empirically defensible distributions.}
 
-\section{The Basic Model}
-Bitcoin blocks are by design distributed according a Poisson process with a rate of discovery of one block every 10 minutes. Let $\tau$ index time in minutes, and $N(\tau)$ denote the number of blocks discovered by time $\tau$. Then for $\delta > 0$, the number of blocks discovered between time $\tau$ and time $\tau + \delta$ is Poisson distributed, that is $N(\tau + \delta) - N(\tau) \sim Poi(\delta/10)$. Let $k=1,2,\dots$ denote each of the blocks, in order. Then the amount of time between blocks is exponentially distributed. Let $\tau_k$ denote the the time when block $k$ arrives. Then $\tau_{k+1} - \tau_{k} \stackrel{iid}{\sim} exp(1/10)$ for $k=1,2,\dots,K$. This part of the model is determined for us, but determining the how the number of transactions is distributed or, more precisely, how the amount of transaction {\it data} is distributed requires more work. 
 
-Crucial constraints on the models we can fit come from the data obtained from the block chain. Since Bitcoin is a distributed network without a home node, there is no official timestamp for when each block arrives on the chain. Instead, the block miner's local time is recorded. Two constraints on the reported time that the block was mined are built into the Bitcoin protocol. First, any block submitted to the chain with a local time less than the median local times of the last 11 blocks is rejected. Second, any block with a local time greater than network adjusted time plus two hours is rejected, where network adjusted time is defined as the local time plus the median difference between local time and the time at all nodes connected to the local node, with a maximum offset of 70 minutes. Because of the nature of the blocks' timestamps, occasionally a block has a timestamp which is earlier than one or more previous blocks in the chain. Essentially, we have measurement error on the measurement times, and the lower and upper bounds for valid timestamps define lower and upper bounds for the measurement error distribution. Unfortunately network adjusted time is not recorded in the blockchain, so the upper bound is not observed, but the lower bound is at our disposal.
 
-The second major constraint that the block chain imposes on us is that transaction data is only measured once a block is completed. So at random measurement times which we only observe with error, we observe the amount of transaction data since the previous measurement time --- though we observe this without error. These two constraints motivate a class of models for modeling Bitcoin transaction data. Let $\tau_k$ denote the actual time of the arrival of the $k$'th block, $\delta_k$ the amount of time it is the current block so that $\tau_{k+1}=\tau_k + \delta_k$, and $t_k$ the observed arrival time in the blockchain. Further, let $x_\tau$ denote the amount data in the chain at time $\tau$ so that $x_{\tau_{k+1}} - x_{\tau_k}$ denotes the amount of data in block $k$. Now suppose the amount of transaction data in MBs is distributed according to some stochastic process $dx_\tau$ so that $x_{\tau + \delta} - x_\tau = \int_\tau^{\tau + \delta}dx_\tau$, a stochastic integral. Then the amount of transaction data that arrives in $k$'th block is given by $\int_{\tau_k}^{\tau_{k}+\delta_k}dx_\tau$. 
+\section{Motivation}
+As Bitcoin becomes more popular, the transaction rate increases. Since existing Bitcoin rules limit the amount of transactions per block to one MB at some point the blocks will begin filling up. Bitcoin blocks are by design distributed according a Poisson process with a rate of discovery of one block every 10 minutes. Let $\tau$ index time in minutes, and $N(\tau)$ denote the number of blocks discovered by time $\tau$. Then for $\delta > 0$, the number of blocks discovered between time $\tau$ and time $\tau + \delta$ is Poisson distributed, that is $N(\tau + \delta) - N(\tau) \sim Poi(\delta/10)$. Let $k=1,2,\dots$ denote each of the blocks, in order. Then the amount of time between blocks is exponentially distributed. Let $\tau_k$ denote the the time when block $k$ arrives. Then $\delta_k \equiv \tau_{k+1} - \tau_{k} \stackrel{iid}{\sim} Exp(1/10)$ for $k=1,2,\dots,K$, where if $x\sim Exp(\lambda)$ it has the density $p(x) = \lambda e^{-x\lambda}$ for $x>0$ and $\lambda>0$ with mean $1/\lambda$. 
 
-Most of the interesting modeling choices come from modeling $dx_\tau$. Conventional Brownian motion is inappropriate since the increments should be nonnegative. On the other hand, geometric Brownian motion is a poor choice since it cannot start from zero. Instead, we consider the classes of non-negative infinite activity L\'{e}vy processes with closed form solutions for $x_{\tau}$. The stochastic process $\{x_{\tau}:\tau>0\}$ is a L\'{e}vy process if it is continous time and has independent and stationary increments with $x_0=0$. Brownian motion is the most common example. A better example for our purposes is the Gamma process where $x_{\tau + \delta} - x_{\tau} \sim G(\alpha \delta, \beta)$ for any time $\tau$ and positive increment $\delta$. We use the shape-rate parameterization of the gamma distribution so that if $x\sim G(alpha,\beta)$, it has the density
+There is always some chance that a given block will fill up since arrival times are stochastic. Specifically, for the $k$'th block this probability is
+\[
+P\left(x_{\tau_k + \delta_k} - x_{\tau_k} > 1\right).
+\]
+This probability depends crucially on the process that $x_\tau$ follows. If we assume that $x_{\tau}$ is determinstic with a constant transaction rate of $\gamma$ MB/min, then 
+\[
+x_{\tau_k + \delta_k} - x_{\tau_k} = \gamma\delta_k \stackrel{ind}{\sim} Exp(1/10\gamma)
+\]
+and the probability of a full block is available in closed form as
+\[
+P\left(x_{\tau_k + \delta_k} - x_{\tau_k} > 1\right) = \int_1^\infty 10\gamma e^{-10\gamma x}dx = e^{-10\gamma}.
+\]
+
+Clearly a constant transaction rate does not capture Bitcoin's behavior since it has been growing in popularity. With a non-constant and potentially stochastic transaction rate, the probability of a block filling up is no longer necessarily available in closed form. Using a Monte Carlo simulation of $N$ draws of the block sizes from the process $x_{\tau}$, we can approximate the probability of block $k$ filling up with
+\[
+\frac{1}{N}\sum_{i=1}^N\mathbbm{1}\left\{x^{(i)}_{\tau_{k}^{(i)}+\delta_k^{(i)}} - x^{(i)}_{\tau_k^{(i)}} > 1\right\}
+\]
+where $i$ indexes the Monte Carlo simulations of each of the random quantities inside the indicator function. If we let $\gamma$ denote the mean transaction rate, which is the same as the actual transaction rate in the constant, deterministic case, we can alter $\gamma$ to see how the probability of a full block changes under a variety of regimes.
+
+A key question is whether the assumption of a constant transaction rate is approximately correct on a short enough time-scale. In order to test this assumption we fit a the gamma distribution to the block sizes of various pieces of the block chain. We use the shape-rate parameterization of the gamma distribution so that if $x\sim G(\alpha,\beta)$, it has the density
 \[
 p(x) = \frac{\beta^\alpha}{\Gamma(\alpha)}x^{\alpha-1}e^{-x\beta}
 \]
-for $x>0$ with mean $\alpha/\beta$ and variance $\alpha/\beta^2$. 
+for $x>0$ with mean $\alpha/\beta$ and variance $\alpha/\beta^2$. Since the $G(1,\beta)$ and $Exp(\beta)$ distributions are identical, if we find that $\alpha\neq 1$ then transaction rates cannot be constant. We focus on the most recent 5000 blocks in our database, which is in the process of downloading the entire chain, ending with block 303151.  For priors we will assume $\log \alpha \sim N(0, 10)$ and $\beta \sim G(1, 1)$. This prior on $\alpha$ implies that the prior median is $\alpha=1$ so that the null hypothesis is favored relatively strongly by the prior. We fit the model to all 5000 blocks, the first 1000 blocks, the second 1000 blocks, etc., and the first 500 blocks, the second 500 blocks, etc. The results are in Table \ref{tab:gammafit}. 
 
-While all L\'{e}vy processes are infinitely divisible, the gamma process is particularly convenient since the distribtion of $x_{\tau+\delta} - x_\tau$ and $x_\tau$ are both known in closed form as a consequence of the fact that if $x\sim G(\alpha_x,\beta)$ independent of $y\sim G(\alpha_y,\beta)$, then $x+y \sim G(\alpha_x + \alpha_y, \beta)$. Often L\'{e}vy processes are defined by considering an infinitely divisible distribution for $x_1$, but the distribution of $x_{\tau}$ for any $\tau>0$ need not be from the same class as $x_1$. The inverse Gaussian process is another L\'{e}vy process which has a closed form solution for the distribution of $x_\tau$. The inverse Gaussian density is
+% latex table generated in R 3.2.2 by xtable 1.7-4 package
+% Mon Oct 12 10:44:18 2015
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrr}
+  \hline
+ & Mean & 2.5\% & 97.5\% \\ 
+  \hline
+       $n=5000$ & 1.34 & 1.29 & 1.39 \\ 
+$n=1000$, $g=1$ & 1.26 & 1.17 & 1.37 \\ 
+$n=1000$, $g=2$ & 1.36 & 1.26 & 1.47 \\ 
+$n=1000$, $g=3$ & 1.37 & 1.26 & 1.47 \\ 
+$n=1000$, $g=4$ & 1.27 & 1.17 & 1.37 \\ 
+$n=1000$, $g=5$ & 1.41 & 1.30 & 1.52 \\ 
+ $n=500$, $g=1$ & 1.29 & 1.15 & 1.45 \\ 
+ $n=500$, $g=2$ & 1.23 & 1.10 & 1.37 \\ 
+ $n=500$, $g=3$ & 1.46 & 1.31 & 1.63 \\ 
+ $n=500$, $g=4$ & 1.28 & 1.14 & 1.42 \\ 
+ $n=500$, $g=5$ & 1.55 & 1.38 & 1.74 \\ 
+ $n=500$, $g=6$ & 1.21 & 1.08 & 1.34 \\ 
+ $n=500$, $g=7$ & 1.24 & 1.11 & 1.38 \\ 
+ $n=500$, $g=8$ & 1.29 & 1.15 & 1.44 \\ 
+ $n=500$, $g=9$ & 1.36 & 1.21 & 1.52 \\ 
+ $n=500$, $g=10$ & 1.46 & 1.30 & 1.63 \\ 
+ \hline
+\end{tabular}
+\caption{Posterior mean and 95\% credible intervals for $\alpha$ from fitting a gamma distribution to block sizes of the last 5000 blocks in our database. For sample sizes less than 5000, blocks were broken into groups of equal size and the model was fit separately to each group. Sample size is indicated by $n$, group id by $g$. Each model was fit in RStan\protect\footnotemark using 4 chains, each with 4000 iterations, 2000 of which used for warmup/burn in.}
+\label{tab:gammafit}
+\end{table}
+
+For\footnotetext{Cite RStan} the full 5000 blocks, the posterior mean of $\alpha$ is 1.34 and the lower bound of the 95\% credible interval is 1.29, so we have strong evidence that $\alpha$ is nonzero and that a constant transaction rate is not appropriate. This is not surprising since Bitcoin usage has gone up over time, but on a short enough time scale usage may be approximately constant. A block is around 10 minutes on average, so 5000 blocks takes a little over a month on average. It is possible that on a short enough time-scale, constant transaction rates are more appropriate. So we fit the gamma distribution to 1000 blocks at a time --- representing about a week --- by breaking the original 5000 blocks into five groups. For each of these groups the 95\% credible interval does not contain one --- the lowest lower bound is 1.17. Similarly for groups of 500 blocks, each representing about 3.5 days, the lowest lower bound is about 1.08. So we can safely conclude that the transaction rate is not constant. A likely reason for this is seasonality in transaction rates --- Bitcoin trades are probably more likely to happen during certain times of day than others, based on when relevant markets are open and when the bulk of Bitcoin users are awake. The {\it mean} transaction rate averaging over e.g. seasonality is probably approximately constant for time-scales this small, however. In any case, transaction rates are nonconstant even on short time-scales, which motivates modeling them as such.
+
+\section{The Model}
+
+The first part of the model is determined for us since we know $\delta_k\stackrel{iid}{\sim} Exp(1/10)$ by the design of Bitcoin, but determining the how how the amount of transaction data is distributed requires more work. Crucial constraints on the models we can fit come from the data obtained from the block chain. Since Bitcoin is a distributed network without a home node, there is no official timestamp for when each block arrives on the chain. Instead, the block miner's local time is recorded. Two constraints on the reported time that the block was mined are built into the Bitcoin protocol. First, any block submitted to the chain with a local time less than the median of local times of the last 11 blocks is rejected. Second, any block with a local time greater than network adjusted time plus two hours is rejected, where network adjusted time is defined as the local time plus the median difference between local time and the time at all nodes connected to the local node with a maximum offset of 70 minutes. Because of the nature of the blocks' timestamps, occasionally a block has a timestamp which is earlier than one or more previous blocks in the chain. Essentially, we have measurement error on the measurement times, and the lower and upper bounds for valid timestamps define lower and upper bounds for the measurement error distribution. Unfortunately network adjusted time is not recorded in the blockchain, so the upper bound is not observed, but the lower bound is at our disposal.
+
+The second major constraint that the block chain imposes on us is that transaction data is only measured once a block is completed. So at random measurement times which we only observe with error, we observe the amount of transaction data since the previous measurement time --- though we observe this without error. These two constraints motivate a class of models for modeling Bitcoin transaction data. Once again, let $\tau_k$ denote the actual time of the arrival of the $k$'th block, $\delta_k$ the amount of time it is the current block so that $\tau_{k+1}=\tau_k + \delta_k$, and now $t_k$ the observed arrival time in the blockchain. Further, let $x_\tau$ denote the amount data in the entire chain at time $\tau$ so that $x_{\tau_{k} + \delta_k} - x_{\tau_k}$ denotes the amount of data in block $k$. Now suppose the amount of transaction data in MBs is distributed according to some nondecreasing, infinitely divisible\footnote{Should we define?} stochastic process. Most of the interesting modeling choices come from modeling this stochastic process. Conventional Brownian motion is inappropriate since the increments should be nonnegative while geometric Brownian motion is a poor choice since it cannot start from zero. Instead, we consider the classes of non-negative infinite activity\footnote{Should we define?} L\'{e}vy processes, often called subordinators, with closed form solutions for $x_{\tau}$.\footnote{Cite the Levy process chapter here}. The stochastic process $\{x_{\tau}:\tau>0\}$ is a L\'{e}vy process if it is continous time and has independent and stationary increments with $x_0=0$. Brownian motion is the most common example. A nondecreasing example is the Gamma process where $x_{\tau + \delta} - x_{\tau} \sim G(\alpha \delta, \beta)$ for any time $\tau$ and positive increment $\delta$. 
+
+While all L\'{e}vy processes are infinitely divisible, the gamma process is particularly convenient since the distribtion of $x_{\tau+\delta} - x_\tau$ and $x_\tau$ are both known in closed form as a consequence of the fact that if $x_1\sim G(\alpha_1,\beta)$ independent of $x_2\sim G(\alpha_2,\beta)$, then $x_1+x_2 \sim G(\alpha_1 + \alpha_2, \beta)$. Often L\'{e}vy processes are defined by considering an infinitely divisible distribution for $x_1$, but the distribution of $x_{\tau}$ for any $\tau>0$ need not be from the same class as $x_1$. The inverse Gaussian process is another L\'{e}vy process which has a closed form solution for the distribution of $x_\tau$. The inverse Gaussian density is
 \[
 p(x) = \left[\frac{\lambda}{2\pi x^3}\right]^{1/2}\exp\left[\frac{-\lambda(x - \mu)^2}{2\mu^2x}\right]
 \]
-for $x>0$ with mean parameter $\mu>0$, shape parameter $\lambda>0$, and variance $\mu^3/\lambda$. Then increments of the inverse Gaussian process are inverse Gaussian distributed, viz. $x_{\tau + \delta} - x_\tau \sim IG(\mu\delta,\lambda\delta^2)$. 
+for $x>0$ with mean parameter $\mu>0$, shape parameter $\lambda>0$, and variance $\mu^3/\lambda$. Then increments of the inverse Gaussian process are inverse Gaussian distributed, viz. $x_{\tau + \delta} - x_\tau \sim IG(\mu\delta,\lambda\delta^2)$.
 
-It is attractive that we can write down the distribution of $x_{\tau + \delta} - x_\tau$ in closed form since the observation times are observed with error. This simplifies Markov chain Monte Carlo methods that may be used to fit the model by allowing us to exactly simulate $x_{\tau_k + \delta_k}$ without resorting to approximation. The parameters of the Gamma or inverse Gaussian distributions can also be further modeled as stochastic processes in order to capture e.g. seasonal variation or stochastic volatility, but many reasonable models on these parameters will not allow for closed form distributions of the parameter increments. 
+It is attractive that we can write down the distribution of $x_{\tau + \delta} - x_\tau$ in closed form since the observation times are observed with error. This simplifies Markov chain Monte Carlo methods that may be used to fit the model by allowing us to exactly simulate $x_{\tau_k + \delta_k}$ without resorting to approximation methods. The parameters of the Gamma or inverse Gaussian distributions can also be further modeled as stochastic processes in order to capture e.g. seasonal variation or stochastic volatility, though most reasonable models on these parameters will not allow for closed form distributions of the parameter increments. We will use the gamma process since it is widely available in statistical packages, unlike the main alternative, the inverse Gaussian.
 
 On the data level we have measurement error with a lower bound, motivating a class of models of the form 
 \[
 t_{k+1} |t_{1:k}, \tau_{1:K} \stackrel{ind}{\sim} p(t|\tau_{k+1}, \phi)\mathbbm{1}\left\{t > m_{k+1})\right\}
 \]
-where $p(t|\tau,\phi)$ is a class of probability densities on $t>0$ with centrality parameter $\tau$ and dispersion parameter $\phi$, and $m_k = \mathrm{median}(t_{k - 0:10})$. For example $\tau$ could be the mean or the mode and $\phi$ the variance or precision. This interpretation of these parameter applies for the {\it untruncated} distribution $p(t|\tau,\phi)$, but not necessarily for the condtional dsitribution of $t_k$. A natural choice here is another gamma distribution, since the untruncated distribution still must be non-negative. However the gamma causes computational problems since it forces the latent measurement times, $\tau_k$ to enter the gamma function. A similar model that avoids this problem is the lognormal distribution.
+where $p(t|\tau,\phi)$ is a class of probability densities on $t>0$ with centrality parameter $\tau$ and dispersion parameter $\phi$, and $m_k = \mathrm{median}(t_{k - 0:10})$. For example $\tau$ could be the mean or the mode and $\phi$ the variance or precision. This interpretation of these parameter applies for the {\it untruncated} distribution $p(t|\tau,\phi)$, but not necessarily for the condtional dsitribution of $t_k$. A natural choice here is another gamma distribution, since the untruncated distribution still must be non-negative. However the gamma causes numerical problems at times since it forces the latent measurement times, $\tau_k$ to enter the gamma function. A similar model that avoids this problem is the lognormal distribution, which we will use.
 
-To start, consider the following parameterized model using the structure discussed above. For block $k=1,2,\dots,K$
+Combining these pieces we obtain the following model. For block $k=1,2,\dots,K$
 \begin{align*}
 t_k|t_{1:(k-1)}, \tau_{1:K} &\sim LN(\log(\tau_k) - \sigma^2/2, \sigma)\mathbbm{1}(t_k > m_k)\\
 x_{\tau_{k+1}} - x_{\tau_{k}}|\tau_{1:K} & \stackrel{ind}{\sim} G(\beta\gamma\delta_k,\beta)\\
-\delta_{k} = \tau_{k} - \tau_{k-1} &\stackrel{iid}{\sim} Exp(1/10)
-\end{align*}
-where $x\sim LN(\mu,\sigma)$ means $\log(x) \sim N(\mu,\sigma)$. Note that $x_{\tau_{k+1}} - x_{\tau_k}$ depends on $\delta_k$ because the $k$'th block arrives at $\tau_k$ and departs at $\tau_{k+1}=\tau_k + \delta_k$ --- the block has $\delta_k$ minutes to accumulate transaction data.
-
-\subsection{Stochastic transaction rates --- seasonality and autocorrelation}
-It is unlikely that the transaction rate is constant in time. The transaction rate is clearly growing as Bitcoin becomes more popular, and seasonal variation is expected throughout the data. Further, autocorrelation in transaction rates is likely since periods of high activity will sometimes be caused by, e.g., new information about the long term prospects of Bitcoin.
-
-Let $\gamma_\tau$ denote the transaction rate at time $\tau$. We model the evolution of this rate as a variant of the exponential Ornstein–Uhlenbeck (OU) process. Specifically let $\varepsilon_t = \log(\gamma_t) - \mu_t$ , and let $\mu_t$ define a deterministic function of time containing seasonal and trend components. Then $\varepsilon_{\tau}$ is an OU process:
-\begin{align*}
-d\varepsilon_{\tau} = -\phi \varepsilon_{\tau}d\tau + \sigma_{\varepsilon} dB_{\tau}
-\end{align*}
-where $B_\tau$ is standard Brownian motion. It\^{o}'s lemma gives the stochastic differential equation for $\gamma_{\tau} = e^{\varepsilon_{\tau} + \mu_{\tau}}$:
-\begin{align*}
-d\gamma_\tau = -\phi(\log\gamma_\tau - \mu_\tau)\gamma_\tau + \sigma_{\varepsilon}^2/2\gamma_\tau +d\mu_\tau \gamma_\tau + \sigma_{\varepsilon}\gamma_\tau dB_\tau.
-\end{align*}
-The solution to the OU process is
-\begin{align*}
-\varepsilon_{\tau} = e^{-\phi\tau}\left(\varepsilon_0 + \int_0^\tau \sigma_{\varepsilon}e^{\phi s}dB_s\right)
-\end{align*}
-so that 
-\begin{align*}
-\varepsilon_{\tau + \delta} | \varepsilon_{\tau} \sim N\left(e^{-\phi\delta}\varepsilon_{\tau}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right).
-\end{align*}
-and thus
-\begin{align*}
-\log \gamma_{\tau + \delta}|\log\gamma_\tau \sim N\left(e^{-\phi\delta}(\log\gamma_{\tau} - \mu_\tau) + \mu_{\tau + \delta}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right).
-\end{align*}
-In other words, $\gamma_{\tau + \delta}$ has a lognormal distribution. 
-
-To stitch this piece onto the larger model, we exploit the inifnite divisibility property of the gamma distribution. Suppose that
-\begin{align*}
-x_{\tau + \delta} - x_\tau &\sim G(\beta \int_{\tau}^{\tau + \delta} d\gamma_s, \beta)
-\end{align*}
-with $d\gamma_\tau$ defined as above. Since both $x_{\tau}$ and $\gamma_{\tau}$ are continuous time processes, it should be possible to break the interval $[\tau, \tau + \delta]$ into a set of subintervals $[\tau + \delta_k, \tau + \delta_{k+1}]$, $0=\delta_0<\delta_1<\dots<\delta_K=\delta$ such that $x_{\tau + \delta} - x_{\tau} = \sum_{k=1}^K (x_{\tau + \delta_k} - x_{\tau + \delta_{k-1}})$. Since $\int_{\tau}^{\tau + \delta}d\gamma_s = \gamma_{\tau + \delta} - \gamma_{\tau}$ we have 
-\begin{align*}
-x_{\tau + \delta_k} - x_{\tau + \delta_{k-1}} \stackrel{ind}{\sim} G(\beta(\gamma_{\tau + \delta_k} - \gamma_{\tau + \delta_{k-1}}), \beta)
-\end{align*}
-so that by the gamma distribution's infinite divisibility property
-\begin{align*}
-\sum_{k=1}^Kx_{\tau + \delta_k} - x_{\tau + \delta_{k-1}} \sim G\left(\beta\sum_{k=1}^K(\gamma_{\tau + \delta_k} - \gamma_{\tau + \delta_{k-1}}), \beta\right) = G\left(\beta(\gamma_{\tau + \delta} - \gamma_\tau), \beta\right).
-\end{align*}
-In other words, this is consistent with the assumed distribution on $x_{\tau + \delta} - x_{\tau}$.
-
-The full model can then be written as
-\begin{align*}
-t_k|t_{1:(k-1)}, \tau_{1:K} &\sim LN(\log(\tau_k) - \sigma^2/2, \sigma)\mathbbm{1}(t_k > m_k)\\
-x_{\tau_{k+1}} - x_{\tau_{k}}|\tau_{1:K} & \stackrel{ind}{\sim} G\left(\beta(\gamma_{\tau_k + \delta_k} - \gamma_{\tau_k}),\beta\right)\\
-\gamma_{\tau_k + \delta_k}|\gamma_{\tau_k} & \sim LN\left(e^{-\phi\delta}(\log\gamma_{\tau_k} - \mu_{\tau_k}) + \mu_{\tau_k + \delta_k}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right)\\
 \delta_{k} = \tau_{k+1} - \tau_{k} &\stackrel{iid}{\sim} Exp(1/10)
 \end{align*}
-for blocks $k=1,2,\dots,N$ where $\mu_{\tau}$ is a parameterized deterministic function of $\tau$. For example, a trend with seasonal variability can be obtained via $\mu_{\tau} = \alpha_0 + \alpha_1\tau + \alpha_2\sin(2\pi f \tau + \psi)$ where $alpha_{0}$, $\alpha_1$, $\alpha_2$, and $\psi$ are uknown parameters and $f$ is the known frequency of the seasonal effect.
+where $x\sim LN(\mu,\sigma)$ means $\log(x) \sim N(\mu,\sigma)$. Note that $x_{\tau_{k+1}} - x_{\tau_k}$ depends on $\delta_k$ because the $k$'th block arrives at $\tau_k$ and departs at $\tau_{k+1}=\tau_k + \delta_k$ so that block $k$ has $\delta_k$ minutes to accumulate transaction data. To complete the model we assume $\sigma$, $\beta$, and $\gamma$ are independent in the prior with $\sigma \sim Cauchy(0, 2.5)$, $\beta \sim G(1, 1)$, and $\gamma \sim LN(0, 10)$. Table \ref{tab:modelfit} contains the results of fitting the model.
 
-\section{The key question}
-As Bitcoin becomes more popular, the transaction data rate increases. Since existing Bitcoin rules limit the number of transactions per block to one MB, at some point the blocks will begin filling up. The purpose of modeling Bitcoin's transaction data rate is to estimate the probability of seeing a full block under a variety of assumptions. Starting from the base model above, the quantity we are interested in is thus
-\[
-P\left(\int_{\tau_k}^{\tau_{k}+\delta_k}dx_\tau > 1\right)
-\]
-for some choice of $k$. 
+% latex table generated in R 3.2.2 by xtable 1.7-4 package
+% Mon Oct 12 15:04:44 2015
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{lrrrrrrrr}
+    \hline
+            & Mean    & SD     & SE(Mean) & 2.5\%   & 25\%    & 50\%    & 75\%    & 97.5\% \\ 
+    \hline
+   $\gamma$ & 0.0240  & 0.0004 & 0.0000   & 0.0232  & 0.0237  & 0.0240  & 0.0243  & 0.0248 \\ 
+   $\beta$  & 15.1590 & 0.9432 & 0.0105   & 13.4132 & 14.5042 & 15.1251 & 15.7791 & 17.0910 \\ 
+   $\sigma$ & 0.0024  & 0.0001 & 0.0000   & 0.0023  & 0.0024  & 0.0024  & 0.0024  & 0.0025 \\ 
+    \hline
+ \end{tabular}
+ \caption{Results of fitting the measurement error model with stochastic measurement times. We use RStan to fit the model, obtaining four chains each of 4000 iterations, 2000 of which used for warmup/burn in.\protect\footnotemark (Note: outdated numbers, updated ones coming) }
+ \label{tab:modelfit}
+ \end{table}
 
-For some distributional forms for the process $dx_\tau$ it may be possible to compute these quantities analytically, but in general it may be difficult. Using a Monte Carlo simulation of $N$ draws, we can approximate these probabilities by
-\[
-\frac{1}{N}\sum_{i=1}^N\mathbbm{1}\left\{\int_{\tau_k^{(i)}}^{\tau_{k}^{(i)}+\delta_k^{(i)}}dx_\tau^{(i)} > 1\right\}
-\]
-where $i$ indexes the Monte Carlo simulations of each of the random quantities inside the indicator function. The key parameter we will control in these simulations is the mean transaction data rate, $\gamma$, or the distribution of this rate. Starting with the basic model fit to, say, the last 1000 blocks on the blockchain (approximately one week of elapsed time), we can control this parameter in several ways.
 
-The simplest way to compute parameter estimates based on fitting model, e.g. maximum likelihood estimates, posterior means, or posterior medians. Then estimate the probability of a block filling up by simulating the model conditional on these parameter values. In order to take into account increased Bitcoin usage, we can manually increase the mean transaction data rate parameter, $\gamma$, while holding other parameters constant. 
+%% \subsection{Stochastic transaction rates --- seasonality and autocorrelation}
+%% It is unlikely that the transaction rate is constant in time. The transaction rate is clearly growing as Bitcoin becomes more popular, and seasonal variation is expected throughout the data. Further, autocorrelation in transaction rates is likely since periods of high activity will sometimes be caused by, e.g., new information about the long term prospects of Bitcoin.
 
-This approach has two major shortfalls: 1) it ignores parameter uncertainty, and 2) it assumes that the other parameters will remain constant as $\gamma$ increases. We can mitigate 1) while making 2) if not worse, different. Specifically, suppose we fit the model and have access to the full (approximate) posterior distribution of the model parameters. Then we can simulate from the posterior of the parameters and for each simulated parameter, simulate the model in order to estimate the probability of a block filling up. This approach takes into account parameter uncertainty but assumes that our uncertainty about the other parameters would be unchanged if the location of $\gamma$'s distribution were different, e.g. its mean $\bar{\gamma}$. We estimate the probability of a block filling using both approaches, but because of the required assumptions the estimates become less credible for values of $\gamma$ or $\bar{\gamma}$ further away from the estimated values.
+%% Let $\gamma_\tau$ denote the transaction rate at time $\tau$. We model the evolution of this rate as a variant of the exponential Ornstein–Uhlenbeck (OU) process. Specifically let $\varepsilon_t = \log(\gamma_t) - \mu_t$ , and let $\mu_t$ define a deterministic function of time containing seasonal and trend components. Then $\varepsilon_{\tau}$ is an OU process:
+%% \begin{align*}
+%% d\varepsilon_{\tau} = -\phi \varepsilon_{\tau}d\tau + \sigma_{\varepsilon} dB_{\tau}
+%% \end{align*}
+%% where $B_\tau$ is standard Brownian motion. It\^{o}'s lemma gives the stochastic differential equation for $\gamma_{\tau} = e^{\varepsilon_{\tau} + \mu_{\tau}}$:
+%% \begin{align*}
+%% d\gamma_\tau = -\phi(\log\gamma_\tau - \mu_\tau)\gamma_\tau + \sigma_{\varepsilon}^2/2\gamma_\tau +d\mu_\tau \gamma_\tau + \sigma_{\varepsilon}\gamma_\tau dB_\tau.
+%% \end{align*}
+%% The solution to the OU process is
+%% \begin{align*}
+%% \varepsilon_{\tau} = e^{-\phi\tau}\left(\varepsilon_0 + \int_0^\tau \sigma_{\varepsilon}e^{\phi s}dB_s\right)
+%% \end{align*}
+%% so that 
+%% \begin{align*}
+%% \varepsilon_{\tau + \delta} | \varepsilon_{\tau} \sim N\left(e^{-\phi\delta}\varepsilon_{\tau}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right).
+%% \end{align*}
+%% and thus
+%% \begin{align*}
+%% \log \gamma_{\tau + \delta}|\log\gamma_\tau \sim N\left(e^{-\phi\delta}(\log\gamma_{\tau} - \mu_\tau) + \mu_{\tau + \delta}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right).
+%% \end{align*}
+%% In other words, $\gamma_{\tau + \delta}$ has a lognormal distribution. 
 
-Table \ref{tab:probsims} contains estimates of the probability of a filled block under a variety of assumptions, using parameter estimates of the posterior distribution of the model using 1000 contiguous blocks ending with block $253,221$ from August 20, 2013 arriving at about 11:39 a.m.
+%% To stitch this piece onto the larger model, we exploit the inifnite divisibility property of the gamma distribution. Suppose that
+%% \begin{align*}
+%% x_{\tau + \delta} - x_\tau &\sim G(\beta \int_{\tau}^{\tau + \delta} d\gamma_s, \beta)
+%% \end{align*}
+%% with $d\gamma_\tau$ defined as above. Since both $x_{\tau}$ and $\gamma_{\tau}$ are continuous time processes, it should be possible to break the interval $[\tau, \tau + \delta]$ into a set of subintervals $[\tau + \delta_k, \tau + \delta_{k+1}]$, $0=\delta_0<\delta_1<\dots<\delta_K=\delta$ such that $x_{\tau + \delta} - x_{\tau} = \sum_{k=1}^K (x_{\tau + \delta_k} - x_{\tau + \delta_{k-1}})$. Since $\int_{\tau}^{\tau + \delta}d\gamma_s = \gamma_{\tau + \delta} - \gamma_{\tau}$ we have 
+%% \begin{align*}
+%% x_{\tau + \delta_k} - x_{\tau + \delta_{k-1}} \stackrel{ind}{\sim} G(\beta(\gamma_{\tau + \delta_k} - \gamma_{\tau + \delta_{k-1}}), \beta)
+%% \end{align*}
+%% so that by the gamma distribution's infinite divisibility property
+%% \begin{align*}
+%% \sum_{k=1}^Kx_{\tau + \delta_k} - x_{\tau + \delta_{k-1}} \sim G\left(\beta\sum_{k=1}^K(\gamma_{\tau + \delta_k} - \gamma_{\tau + \delta_{k-1}}), \beta\right) = G\left(\beta(\gamma_{\tau + \delta} - \gamma_\tau), \beta\right).
+%% \end{align*}
+%% In other words, this is consistent with the assumed distribution on $x_{\tau + \delta} - x_{\tau}$.
+
+%% The full model can then be written as
+%% \begin{align*}
+%% t_k|t_{1:(k-1)}, \tau_{1:K} &\sim LN(\log(\tau_k) - \sigma^2/2, \sigma)\mathbbm{1}(t_k > m_k)\\
+%% x_{\tau_{k+1}} - x_{\tau_{k}}|\tau_{1:K} & \stackrel{ind}{\sim} G\left(\beta(\gamma_{\tau_k + \delta_k} - \gamma_{\tau_k}),\beta\right)\\
+%% \gamma_{\tau_k + \delta_k}|\gamma_{\tau_k} & \sim LN\left(e^{-\phi\delta}(\log\gamma_{\tau_k} - \mu_{\tau_k}) + \mu_{\tau_k + \delta_k}, \frac{\sigma_{\varepsilon}^2}{2\phi}\left[1 - e^{-2\phi\delta}\right]\right)\\
+%% \delta_{k} = \tau_{k+1} - \tau_{k} &\stackrel{iid}{\sim} Exp(1/10)
+%% \end{align*}
+%% for blocks $k=1,2,\dots,N$ where $\mu_{\tau}$ is a parameterized deterministic function of $\tau$. For example, a trend with seasonal variability can be obtained via $\mu_{\tau} = \alpha_0 + \alpha_1\tau + \alpha_2\sin(2\pi f \tau + \psi)$ where $alpha_{0}$, $\alpha_1$, $\alpha_2$, and $\psi$ are uknown parameters and $f$ is the known frequency of the seasonal effect.
+
+Given\footnotetext{Cite RStan} an approximate simulation of the posterior distribution of the model parameters, we can use Monte Carlo simulation to estimate the probability of a block filling up in a number of ways. The simplest way is to compute parameter estimates based on the posterior, e.g. posterior means or posterior medians, then estimate the probability of a block filling up by simulating the model conditional on these parameter values. In order to take into account increased Bitcoin usage, we can manually increase the mean transaction data rate parameter, $\gamma$, while holding other parameters constant. In order to take into account seasonality, we can make $\gamma$ change in a predictable, seasonal pattern.
+
+This approach has two major shortfalls: 1) it ignores parameter uncertainty, and 2) it assumes that the other parameters will remain constant as $\gamma$ increases. We can mitigate 1) while making 2) if not worse, different. Specifically, given access to an approximate simulation of the posterior of the model parameters, we can simulate the model for each draw from the posterior in order to estimate the probability of a block filling up --- this is the posterior predictive distribution.\footnote{Cite Gelman et al. text here} In order to allow for different transaction rates in this simulation, we can set $\gamma$ at a particular value while using the full posterior of the other model parameters, or even better we can shift the posterior of $\gamma$ by some amount $\psi$ so that the posterior mean of the shifted distribution of $\gamma$ is the desired amount. This approach takes into account parameter uncertainty but assumes that our uncertainty about the other parameters would be unchanged if the location of $\gamma$'s distribution were different. We estimate the probability of a block filling using all three approaches, but because of the required assumptions the estimates become less credible for values of $\gamma$ or $\bar{\gamma}$ further away from the estimated values.
+
+Let $P_{\gamma,\beta}^{(k)}$ denote the probability of the $k$'th block filling up given the specified values for $\gamma$ and $\beta$, where the superscript $(k)$ is left off when this probability is independent of the block. Further let $P_{\gamma, \infty}$ denote case of a constant transaction $\gamma$ since for $\beta=\infty$, the $G(\beta \gamma,\beta)$ distribution can be thought of as a point mass at $\gamma$. Further, in this notation let $\tilde{\gamma}$ denote the posterior distribution of $\gamma$, $\bar{\gamma}$ the posterior mean, and $\gamma^{(0.5)}$ denote the posterior median, and similarly for $\beta$, so that e.g. $P_{\tilde{\gamma},\tilde{\beta}}$ is the probability of a block filling up under the posterior distribution of $(\gamma,\beta)$, and $P_{\tilde{\gamma} + \psi,\tilde{\beta}}$ is the probability of a block filling up under the posterior distribution of $(\gamma,\beta)$ except $\gamma$'s distribution has been shifted by $\psi$ so that it has mean $\bar{\gamma} + \psi$. Table \ref{tab:probsims} contains estimates of the probability of a filled block under a variety of assumptions, using parameter estimates of the posterior distribution of the model using 1000 contiguous blocks ending with block 303151.
 % latex table generated in R 3.2.2 by xtable 1.7-4 package
 % Mon Oct  5 14:56:54 2015
 \begin{table}[ht]
@@ -127,62 +187,8 @@ $\gamma - \hat{\gamma}$ & $P_{\bar{\gamma}}$ & $P_{\gamma^{(0.5)}}$ & $P_{\mathr
   0.5 & 0.82 & 0.82 & 0.83 \\ 
    \hline
 \end{tabular}
-\caption{Estimated probability of a filled block under a variety of assumptions. From the posterior distribution the mean is $\bar{\gamma} = 0.0179$ and the median is $\gamma^{(0.5)} = 0.0174$. The value of $\gamma - \hat{\gamma}$ is the amount added to the estimated value of $\gamma$ for the purposes of the simulation, $P_{\bar{\gamma}}$ is the probability of a filled block using posterior means for parameter estimates, $P_{\gamma^{(0.5)}}$ is the probability of a filled block using posterior medians, and $P_{\mathrm{post}}$ is the probability of a filled block using the full posterior distribution.}
+\caption{This table is a placeholder. Important question: what values for $\gamma$ are interesting?}
 \label{tab:probsims}
 \end{table}
-
-\section{Simulation Exercises}
-
-Each simulation exercise starts with specifying a distribution for $dx_t$. There are three basic categories here: deterministic, i.e. fixed at the mean rate, independent, and temporally dependent. There is actually some interesting room in the deterministic class --- for example, $dx_t$ could be increasing in $t$, or at least not constant. This behavior can be captured in a more realistic stochastic environment, so we will focus on that. 
-
-There are several possibilities in the independent class. Transaction data amounts are nonnegative, so it is natural to assume that $dx_t \stackrel{iid}{\sim}\mathcal{G}(\alpha,\beta)$ where $\mathcal{G}(\alpha,\beta)$ denotes the gamma distribution with shape and rate parameters $\alpha$ and $\beta$ respectively. Similarly a log-normal distribution is natural, e.g. $\log(dx_t) \stackrel{iid}{\sim}\mathcal{N}(\mu,\sigma^2)$. The log-$T$ distribution is a useful extension of the log-normal. However, all of these distributions encode some degree of right-skewness which may not match the BTC transaction data. A useful generalization to account for all possible sorts of skew is the skew-normal or more generally skew-$T$ distribution. The skew-normal distribution has the pdf
-\begin{align*}
-p(x) = \frac{2}{\sigma}\phi\left(\frac{x-\mu}{\sigma}\right)\Phi\left(\frac{\alpha(x-\mu)}{\sigma}\right)
-\end{align*}
-where $\phi(.)$ is the standard normal pdf and $\Phi(.)$ is the standard normal cdf. The parameter $\alpha$ controls the degree and direction of skewness, while $\mu$ and $\sigma$ are respectively location and scale parameters. The definition of the skew-$T$ distribution is analogous. This is only one class of options that could be used to account for possible skewness in the distribution of BTC transaction data.
-
-With temporally dependent data, things start to get more interesting. I think a crucial feature here is that the mean structure be easily separable from the structure of the temporal dependence, that way we can easily ask questions like ``if the mean transaction rate increases to X given this dependence structure, what happens to the probability that a given block fills up?'' So the classic decomposition of a time series into trend, seasonal, and error components is exactly what we are looking for. To wit:
-\begin{align*}
-log(dx_t) = T_t + S_t + E_t
-\end{align*}
-where $T_t$ is a deterministic trend component, $S_t$ is a seasonal component which may be stochastic, and $E_t$ is a temporally dependent error component. In a particularly simple case $T_t = \mu$ and $E_t = \rho E_{t-1} + \varepsilon_t$ where $\varepsilon_t \stackrel{iid}{\sim} \mathcal{N}(0,\sigma^2)$, i.e. an AR(1) model. Any mean zero ARMA model can be used for $E_t$, or a plethora of other things, and the error term can also be changed to something skewed skewed if necessary. I suspect the most interesting part for us is the seasonal component --- seasonal variation over the time of day, week, month, or even year may cause certain time periods to have a very high probability of filling up the block. I have a less firm grasp on what I want to try here mostly because I have less experience with modeling seasonal effects, but this does seem like payoff portion of modeling the temporal dependence. 
-
-Another payoff of seasonal effects term is, combined with the trend term, we can predict when in the future BTC will start to have trouble with blocks filling up under a given regime. Also note that we can make these predictions with {\it any} block size substituted in for the actual block size. This is probably not a fruitful exercise unless we build a model specifically with forecasting in mind though.
-
-\section{Fitting Models}
-Instead of choosing parameter values and doing the simulation exercise using the models listed in the previous section, we can estimate the models and use simulations form the posterior predictive distribution in order to do the same exercises while not just using more plausible parameter values, but also taking into account parameter uncertainty. A little more formally, suppose our parameter vector is $\bm{\theta}$ and $\bm{y}$ denotes our data. Let $\bm{y}^{pred}$ denote vector predicted observations. The posterior preidctive density for $\bm{y}^{pred}$ is given by
-\begin{align*}
-p(\bm{y}^{pred}|\bm{y}) = \int p(\bm{y}^{pred}|\bm{\theta})p(\bm{\theta}|\bm{y}) d\bm{\theta}
-\end{align*}
-where $p(y|x)$ denotes the conditional density of the random variable $y$ given the random variable $x$. Given a simulation from $p(\bm{\theta}|\bm{y})$, the posterior distribution of the model parameters, using e.g. MCMC, this density is easy to approximate simply by simulating draws of the predicted $\bm{y}^{pred}$ for each parameter value simulated. More generally, we can fix some of the parameter values and let others vary to, e.g., isolate the effect of increasing the mean of the time series. 
-
-Fitting the models should be straightforward, at least in theory. STAN is probably great for what we are trying to do, which means way less work on our end. The only wrinkles here are 1) now we have to pick prior distributions, which may be controversial, but we can easily do some robustness checks with different priors and 2) potential big data concerns.
-
-\section{A Simple Example}
-
-In this example simulation we assume that the transaction data process $x_t$ follows a continuous time random walk with drift with parameters $\mu$ and $\sigma$, that is
-\[
-x_t - x_s \sim N((t-s)\mu, (t-s)\sigma^2)
-\]
-for $t > s$. So $dx_t = \mu dt + \sigma d B_t$ where $B_t$ is Brownian motion. Using a simulation, Table %\ref{tab:bmprob}
- contains Monte Carlo estimates of the probability that a block fills up under a variety of choices of $\mu$ and $\sigma$. The current average transaction data rate per minute  is $\mu=0.04$ MBs. As $\sigma$ increases the probability of a block filling increases, though when $\sigma$ is close to zero an increase in $\sigma$ may cause the probability to decrease slightly. For most of the range, however, increasing $\sigma$ increases the probability that a block fills up. 
-
-% latex table generated in R 3.2.2 by xtable 1.7-4 package
-% Tue Sep 22 16:26:38 2015
-%\begin{table}[ht]
-%\centering
-%\begin{tabular}{lrrrrrrrr}
-%  \hline
-% & $\sigma = 0$ & $\sigma = 0.001$ & $\sigma = 0.01$ & $\sigma = 0.1$ & $\sigma = 1$ & $\sigma = 10$ & $\sigma = 100$ & $\sigma = 1000$ \\ 
-%  \hline
-%$\mu = 0.035$ & 0.0594 & 0.0594 & 0.0597 & 0.0927 & 0.3574 & 0.4822 & 0.4979 & 0.4994 \\ 
-%  $\mu = 0.04$ & 0.0836 & 0.0835 & 0.0839 & 0.1149 & 0.3624 & 0.4824 & 0.4978 & 0.5005 \\ 
-%  $\mu = 0.045$ & 0.1098 & 0.1098 & 0.1103 & 0.1367 & 0.3680 & 0.4829 & 0.4977 & 0.4995 \\ 
-%  $\mu = 0.05$ & 0.1366 & 0.1366 & 0.1370 & 0.1596 & 0.3739 & 0.4837 & 0.4983 & 0.5003 \\ 
-%   \hline
-%\end{tabular}
-%\caption{Approximate probability of filling of a block under various choices of $\mu$ and $\sigma$%.}
-%\label{tab:bmprob}
-%\end{table}
 
 \end{document}
