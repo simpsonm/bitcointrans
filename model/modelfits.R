@@ -94,77 +94,52 @@ save(fit2, file="loggammafit.RData")
 
 load("loggammafit.RData")
 
-rstan::traceplot(fit2, pars=c('a', 'b', 'mu', 'sigma', 'lp__'), ncol=1)
+rstan::traceplot(fit2, pars=c('gamma', 'beta', 'sigma', 'lp__'), ncol=1)
 
-print(fit2, pars=c('a', 'b', 'mu', 'sigma', 'lp__'), digits = 4)
+print(fit2, pars=c('gamma', 'beta', 'sigma', 'lp__'), digits = 4)
 
 fitex <- extract(fit2)
 
 niter <- 8000
-parout <- cbind(mu=fitex$mu, b=fitex$b, sigma=fitex$sigma)
+parout <- cbind(gamma=fitex$gamma, beta=fitex$beta, sigma=fitex$sigma)
 parsum <- summary(mcmc(parout))
 parout <- cbind(parsum[[1]][,c(1,2,4)], parsum[[2]])
 rownames(parout) <- c("$\\gamma$", "$\\beta$", "$\\sigma$")
-colnames(parout)[3] <- "SE of Mean"
+colnames(parout)[3] <- "SE(Mean)"
 
-xtable(parout, digits = 4)
+print(xtable(parout, digits = 4), sanitize.rownames.function = function(x)gsub("\\\\", "\\", x, fixed=TRUE))
 
-
-mus <- c(0, .01, .05, .1, .5)
-K <- length(mus)
-out <- matrix(0, ncol=3, nrow=K)
-
+gams <- seq(0.02, 0.09, 0.01)
+betamed <- parout[2,6]
+betamn <- parout[2,1]
+gammn <- parout[1,1]
+K <- length(gams)
+out <- matrix(0, ncol=K, nrow=5)
+nrep <- 100
 
 for(i in 1:K){
-  ## use posterior means
-  pars <- parsum[[1]][,1]
-  muhat <- pars[1]
-  bhat <- pars[2]
-  sigmahat <- pars[3]
-  xs <- rexp(niter, 1/10)
-  taus <- cumsum(xs)
-  mbs <- rgamma(niter, (muhat + mus[i])*bhat*xs, bhat)
-  out[i,1] <- mean(mbs>1)
-
-  ## use posterior medians
-  pars <- parsum[[2]][,3]
-  muhat <- pars[1]
-  bhat <- pars[2]
-  sigmahat <- pars[3]
-  xs <- rexp(niter, 1/10)
-  taus <- cumsum(xs)
-  mbs <- rgamma(niter, (muhat + mus[i])*bhat*xs, bhat)
-  out[i,2] <- mean(mbs>1)
-
-  ## use full posterior
-  xs <- rexp(niter, 1/10)
-  taus <- cumsum(xs)
-  mbs <- rgamma(niter, (fitex$mu + mus[i])*fitex$b*xs, fitex$b)
-  out[i,3] <- mean(mbs>1)
+  ## constant transaction rate
+  out[1,i] <- exp(-1/10/gams[i])
+  ## use posterior median * 3
+  xs <- rexp(nrep*niter, 1/10)
+  mbs <- rgamma(nrep*niter, gams[i]*betamed*xs*3, betamed*3)
+  out[2,i] <- mean(mbs>1)
+  ## use posterior median
+  xs <- rexp(nrep*niter, 1/10)
+  mbs <- rgamma(nrep*niter, gams[i]*betamed*xs, betamed)
+  out[3,i] <- mean(mbs>1)
+  ## use full posterior for beta
+  xs <- rexp(nrep*niter, 1/10)
+  mbs <- rgamma(nrep*niter, gams[i]*rep(fitex$beta,nrep)*xs, rep(fitex$beta,nrep))
+  out[4,i] <- mean(mbs>1)
+  ## use full posterior for both
+  xs <- rexp(nrep*niter, 1/10)
+  mbs <- rgamma(nrep*niter, (rep(fitex$gamma,nrep) + gams[i] - gammn)*rep(fitex$beta,nrep)*xs, rep(fitex$beta,nrep))
+  out[5,i] <- mean(mbs>1)
 }
 
-colnames(out) <- c("Mean", "Median", "Posterior")
-rownames(out) <- mus
+colnames(out) <- gams
+rownames(out) <- c("$\\beta = \\infty$", "$\\beta = 3\\times\\beta^{(0.5)}$", "$\\beta = \\beta^{(0.5)}$", "$\\beta \\sim p(\\beta|x,t)$", "$(\\beta,\\gamma) \\sim p(\\beta,\\gamma|x,t)$")
 
-library(xtable)
-
-xtable(out)
-
-
-
-
-
-
-omega <- 2*pi/(60*24)
-
-gamlist <- list(nobs = nobs, t = times, lb = lbs, lambda = 1/10, mb = mbs, sigpars = c(1, 1), sigepspars = c(1, 1), bpars=c(1,1), omega=omega, alphamns=rep(0,3), alphasds=rep(1,3), rhopars=c(1,1), phipar = 2*pi, lgam0pars = c(0, 1))
-## lambda = 1 / mean block discovery time = 1/10 minutes
-
-fit <- stan(file = 'seasonallognormalgamma2.stan', data = gamlist, iter=1, chains=1)
-
-system.time(fit2 <- stan(fit = fit, data = gamlist, iter=100, chains=1, control = list(adapt_delta = 0.98, max_treedepth = 12)))
-
-traceplot(fit2, pars=c('b', 'sigma', 'phi', 'sigeps', 'alpha0', 'alpha1', 'alpha2', 'rho'))
-
-##, control = list(adapt_delta = 0.98, max_treedepth = 14)))
+print(xtable(out, digits = 4), sanitize.rownames.function = function(x)gsub("\\\\", "\\", x, fixed=TRUE))
 
