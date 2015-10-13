@@ -90,15 +90,20 @@ fit <- stan(file = 'lognormalgamma.stan', data = gamlist, iter=1, chains=1)
 
 system.time(fit2 <- stan(fit = fit, data = gamlist, iter=4000, chains=4, control = list(adapt_delta = 0.9, max_treedepth = 13)))
 
+## not stored on github because it's large, csv file of just model pars below is.
 save(fit2, file="loggammafit.RData")
-
-load("loggammafit.RData")
+load("loggammafit.RData") 
 
 rstan::traceplot(fit2, pars=c('gamma', 'beta', 'sigma', 'lp__'), ncol=1)
 
 print(fit2, pars=c('gamma', 'beta', 'sigma', 'lp__'), digits = 4)
 
+## save just the model parameters so we don't have to keep fitting the model
 fitex <- extract(fit2)
+modelpar <- cbind(gamma=fitex$gamma, beta=fitex$beta, sigma=fitex$sigma, lp__=fitex$lp__)
+write.csv(modelpar, file="postpar.csv", row.names = FALSE)
+
+fitex <- read.csv("postpar.csv")
 
 niter <- 8000
 parout <- cbind(gamma=fitex$gamma, beta=fitex$beta, sigma=fitex$sigma)
