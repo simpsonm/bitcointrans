@@ -45,13 +45,14 @@ dbClearResult(res)
 
 
 #let's see the timestamp of the most recent block in our database
-res <- dbSendQuery(con, "select time from blocks order by height desc limit 1")
+res <- dbSendQuery(con, "select time, height from blocks order by height desc limit 1")
 while(!dbHasCompleted(res)){
   chunk <- dbFetch(res, n = 5)
   print(nrow(chunk))
 }
 time <- dbFetch(res)
-as.POSIXct(time$time[1], origin="1970-01-01")
+print(time$height[1])
+print(as.POSIXct(time$time[1], origin="1970-01-01"))
 dbClearResult(res)
 
 
@@ -94,6 +95,30 @@ blockstats1k$bytespermin <- blockstats1k$size*60/blockstats1k$elapsed_time
 library(Hmisc)
 describe(blockstats1k)
 plot(blockstats1k$elapsed_time, blockstats1k$size, main="Block size v. time between blocks", xlab="Seconds since prior block discovery", ylab="bytes", pch=19)
+
+
+#let's see the 100 largest blocks in our database
+res <- dbSendQuery(con, "select height, size from blocks order by size desc limit 100")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+size <- dbFetch(res)
+print(size)
+dbClearResult(res)
+
+
+#let's scatterplot all the blocks in our database by height and size
+res <- dbSendQuery(con, "select height, size from blocks")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+heightsize <- dbFetch(res)
+dbClearResult(res)
+plot(heightsize$height, heightsize$size, main="Block Sizes", 
+   xlab="Block Height ", ylab="Size in Bytes ", pch=19)
+
 
 
 
