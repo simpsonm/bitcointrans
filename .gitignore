@@ -1,8 +1,10 @@
 *.pdf
 *.aux
 *.log
+*.bbl
+*.blg
 *~
 *.lb
 *.synctex.gz
-.Rapp.history
-.Rhistory
+*.Rapp.history
+*.Rhistory
