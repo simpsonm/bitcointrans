@@ -109,15 +109,29 @@ dbClearResult(res)
 
 
 #let's scatterplot all the blocks in our database by height and size
-res <- dbSendQuery(con, "select height, size from blocks")
+res <- dbSendQuery(con, "select height, size from blocks where branch=0")
 while(!dbHasCompleted(res)){
   chunk <- dbFetch(res, n = 5)
   print(nrow(chunk))
 }
 heightsize <- dbFetch(res)
 dbClearResult(res)
-plot(heightsize$height, heightsize$size, main="Block Sizes", 
-   xlab="Block Height ", ylab="Size in Bytes ", pch=19)
+plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time", 
+   xlab="Block Height ", ylab="Size in Bytes ", pch=".")
+
+
+
+#let's download all the data
+res <- dbSendQuery(con, "select * from blocks where branch=0")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+blockchain <- dbFetch(res)
+dbClearResult(res)
+blockchain$work <- vapply(blockchain$work, paste, collapse = ", ", character(1L))
+write.table(blockchain, file = "~/Desktop/blockchain.csv", sep = ",", col.names = NA,
+            qmethod = "double")
 
 
 
