@@ -169,19 +169,23 @@ plot(d)
 
 # install.packages("forecast")
 library(forecast)
+heightsize <- heightsize[order(heightsize$height),]  ### make sure blocks are temporal order
 heightsize$mav <- ma(heightsize$size, 5000, centre=FALSE)
-plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time", 
-   xlab="Block Height ", ylab="Size in Bytes ", pch=".")
+## heightsize$mav2 <- filter(heightsize$size, rep(1/5000, 5000), "convolution", sides = 2)
+## moving average considering only past values
+## change to sides = 2 to consider future and past values -- equivalent to ma() above
+plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time",
+     xlab="Block Height ", ylab="Size in Bytes ", pch=".")
 lines(heightsize$height, heightsize$mav, type='l', col="blue")
-# produces a weird blue area toward the end of the series, am i doing something wrong?
 
 # install.packages("zoo")
 library(zoo)
 heightsize$rollmed <- rollmedian(heightsize$size, 999, fill=NA, align="right")
-plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time", 
-   xlab="Block Height ", ylab="Size in Bytes ", pch=".")
+plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time",
+     xlab="Block Height ", ylab="Size in Bytes ", pch=".")
 lines(heightsize$height, heightsize$rollmedian, type='l', col="blue")
 
 
 
 dbDisconnect(con)
+
