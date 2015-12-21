@@ -134,6 +134,54 @@ write.table(blockchain, file = "~/Desktop/blockchain.csv", sep = ",", col.names 
             qmethod = "double")
 
 
+# let's see if we can find the widely-used block size soft limits
+res <- dbSendQuery(con, "select height, size from blocks where branch=0")
+while(!dbHasCompleted(res)){
+  chunk <- dbFetch(res, n = 5)
+  print(nrow(chunk))
+}
+heightsize <- dbFetch(res)
+dbClearResult(res)
+d<-density(heightsize$size)
+plot(d)
+
+# 5 widely-used block size soft limits: 250kb, 750kb, something in the 300kb range, something in the 900kb range, and 1mb (also occasionally 500kb)
+# upon further research: 
+# 250kb limit introduced in July 2012
+# 350kb in version 0.8.6, released December 9, 2013 https://gist.github.com/gavinandresen/7670433#086-accept-into-block
+# 750kb in version 0.9.0, released March 19, 2014 https://bitcoin.org/en/release/v0.9.0
+# the value or values in the 900 range may be due almost exclusively to the Elegius mining pool. Still trying to pin down the exact value
+
+
+# let's also see if we can find the stress tests programmatically:
+# here's what we know
+# stress test data
+# 1. May 2015
+# blocks became full starting at block number 358596
+# remained full until block number 358609
+# citation: http://www.ofnumbers.com/2015/05/31/a-few-results-from-the-first-intentional-intentional-stress-test-on-a-communal-blockchain/
+# 2. June 22-23, 2015, 100 blocks
+# citation: http://www.coindesk.com/bitcoin-network-survives-stress-test/
+# 3. July 7-10, 2015
+# https://medium.com/blockcypher-blog/a-bitcoin-spam-attack-post-mortem-s-la-ying-alive-654e914edcf4#.y2rcrl10n
+# 4. September 2015
+# citation: https://bitcoinmagazine.com/articles/coinwallet-crowdsources-transactions-major-stress-test-bitcoin-giveaway-1442011334
+
+# install.packages("forecast")
+library(forecast)
+heightsize$mav <- ma(heightsize$size, 5000, centre=FALSE)
+plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time", 
+   xlab="Block Height ", ylab="Size in Bytes ", pch=".")
+lines(heightsize$height, heightsize$mav, type='l', col="blue")
+# produces a weird blue area toward the end of the series, am i doing something wrong?
+
+# install.packages("zoo")
+library(zoo)
+heightsize$rollmed <- rollmedian(heightsize$size, 999, fill=NA, align="right")
+plot(heightsize$height, heightsize$size, main="Bitcoin block sizes over time", 
+   xlab="Block Height ", ylab="Size in Bytes ", pch=".")
+lines(heightsize$height, heightsize$rollmedian, type='l', col="blue")
+
 
 
 dbDisconnect(con)
