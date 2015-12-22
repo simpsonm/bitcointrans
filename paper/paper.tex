@@ -55,35 +55,67 @@ p(x) = \frac{\beta^\alpha}{\Gamma(\alpha)}x^{\alpha-1}e^{-x\beta}
 \]
 for $x>0$, $\alpha>0$, and $\beta>0$ with mean $\alpha/\beta$ and variance $\alpha/\beta^2$. The gamma function in the denominator is defined as $\Gamma(x) = \int_0^\infty x^{t-1}e^{-x}dx$. Since the $G(1,\beta)$ and $Exp(\beta)$ distributions are identical, if we find that $\alpha\neq 1$ then transaction rates cannot be constant. We focus on the most recent 5000 blocks in our database ending with block 303151 --- we are in the process of downloading the entire chain.  For priors we will assume $\log \alpha \sim N(0, 10)$ and $\beta \sim G(1, 1)$. This prior on $\alpha$ implies that the prior median is $\alpha=1$ so that the null hypothesis is favored relatively strongly by the prior. We fit the model to all 5000 blocks, the first 1000 blocks, the second 1000 blocks, etc., and the first 500 blocks, the second 500 blocks, etc. The results are in Table \ref{tab:gammafit}. 
 
-% latex table generated in R 3.2.2 by xtable 1.7-4 package
-% Mon Oct 12 10:44:18 2015
+
+% latex table generated in R 3.2.3 by xtable 1.7-4 package
+% Tue Dec 22 11:03:11 2015
 \begin{table}[ht]
 \centering
-\begin{tabular}{lrrr}
+\begin{tabular}{rrrr}
   \hline
  & Mean & 2.5\% & 97.5\% \\ 
   \hline
-       $n=5000$ & 1.34 & 1.29 & 1.39 \\ 
-$n=1000$, $g=1$ & 1.26 & 1.17 & 1.37 \\ 
-$n=1000$, $g=2$ & 1.36 & 1.26 & 1.47 \\ 
-$n=1000$, $g=3$ & 1.37 & 1.26 & 1.47 \\ 
-$n=1000$, $g=4$ & 1.27 & 1.17 & 1.37 \\ 
-$n=1000$, $g=5$ & 1.41 & 1.30 & 1.52 \\ 
- $n=500$, $g=1$ & 1.29 & 1.15 & 1.45 \\ 
- $n=500$, $g=2$ & 1.23 & 1.10 & 1.37 \\ 
- $n=500$, $g=3$ & 1.46 & 1.31 & 1.63 \\ 
- $n=500$, $g=4$ & 1.28 & 1.14 & 1.42 \\ 
- $n=500$, $g=5$ & 1.55 & 1.38 & 1.74 \\ 
- $n=500$, $g=6$ & 1.21 & 1.08 & 1.34 \\ 
- $n=500$, $g=7$ & 1.24 & 1.11 & 1.38 \\ 
- $n=500$, $g=8$ & 1.29 & 1.15 & 1.44 \\ 
- $n=500$, $g=9$ & 1.36 & 1.21 & 1.52 \\ 
- $n=500$, $g=10$ & 1.46 & 1.30 & 1.63 \\ 
- \hline
+  $n=5000$ & 1.03 & 0.99 & 1.07 \\ 
+  $n=1000$, $g=1$ & 0.88 & 0.82 & 0.95 \\ 
+  $n=1000$, $g=2$ & 0.96 & 0.89 & 1.04 \\ 
+  $n=1000$, $g=3$ & 1.04 & 0.96 & 1.12 \\ 
+  $n=1000$, $g=4$ & 0.97 & 0.89 & 1.04 \\ 
+  $n=1000$, $g=5$ & 1.53 & 1.41 & 1.66 \\ 
+  $n=500$, $g=1$ & 0.90 & 0.80 & 1.00 \\ 
+  $n=500$, $g=2$ & 0.87 & 0.78 & 0.97 \\ 
+  $n=500$, $g=3$ & 0.98 & 0.88 & 1.10 \\ 
+  $n=500$, $g=4$ & 0.94 & 0.84 & 1.04 \\ 
+  $n=500$, $g=5$ & 1.10 & 0.99 & 1.22 \\ 
+  $n=500$, $g=6$ & 0.98 & 0.88 & 1.09 \\ 
+  $n=500$, $g=7$ & 0.88 & 0.79 & 0.98 \\ 
+  $n=500$, $g=8$ & 1.08 & 0.96 & 1.20 \\ 
+  $n=500$, $g=9$ & 1.38 & 1.22 & 1.53 \\ 
+  $n=500$, $g=10$ & 1.74 & 1.55 & 1.94 \\ 
+   \hline
 \end{tabular}
 \caption{Posterior mean and 95\% credible intervals for $\alpha$ from fitting a gamma distribution to block sizes of the last 5000 blocks in our database. For sample sizes less than 5000, blocks were broken into groups of equal size and the model was fit separately to each group. Sample size is indicated by $n$, group id by $g$. Each model was fit in RStan \citep{rstan-software:2015,stan-software:2015} using 4 chains, each with 4000 iterations, 2000 of which used for warmup/burn in.}
 \label{tab:gammafit}
 \end{table}
+
+% OLD TABLE
+% latex table generated in R 3.2.2 by xtable 1.7-4 package
+% Mon Oct 12 10:44:18 2015
+%% \begin{table}[ht]
+%% \centering
+%% \begin{tabular}{lrrr}
+%%   \hline
+%%  & Mean & 2.5\% & 97.5\% \\ 
+%%   \hline
+%%        $n=5000$ & 1.34 & 1.29 & 1.39 \\ 
+%% $n=1000$, $g=1$ & 1.26 & 1.17 & 1.37 \\ 
+%% $n=1000$, $g=2$ & 1.36 & 1.26 & 1.47 \\ 
+%% $n=1000$, $g=3$ & 1.37 & 1.26 & 1.47 \\ 
+%% $n=1000$, $g=4$ & 1.27 & 1.17 & 1.37 \\ 
+%% $n=1000$, $g=5$ & 1.41 & 1.30 & 1.52 \\ 
+%%  $n=500$, $g=1$ & 1.29 & 1.15 & 1.45 \\ 
+%%  $n=500$, $g=2$ & 1.23 & 1.10 & 1.37 \\ 
+%%  $n=500$, $g=3$ & 1.46 & 1.31 & 1.63 \\ 
+%%  $n=500$, $g=4$ & 1.28 & 1.14 & 1.42 \\ 
+%%  $n=500$, $g=5$ & 1.55 & 1.38 & 1.74 \\ 
+%%  $n=500$, $g=6$ & 1.21 & 1.08 & 1.34 \\ 
+%%  $n=500$, $g=7$ & 1.24 & 1.11 & 1.38 \\ 
+%%  $n=500$, $g=8$ & 1.29 & 1.15 & 1.44 \\ 
+%%  $n=500$, $g=9$ & 1.36 & 1.21 & 1.52 \\ 
+%%  $n=500$, $g=10$ & 1.46 & 1.30 & 1.63 \\ 
+%%  \hline
+%% \end{tabular}
+%% \caption{Posterior mean and 95\% credible intervals for $\alpha$ from fitting a gamma distribution to block sizes of the last 5000 blocks in our database. For sample sizes less than 5000, blocks were broken into groups of equal size and the model was fit separately to each group. Sample size is indicated by $n$, group id by $g$. Each model was fit in RStan \citep{rstan-software:2015,stan-software:2015} using 4 chains, each with 4000 iterations, 2000 of which used for warmup/burn in.}
+%% \label{tab:gammafit}
+%% \end{table}
 
 For the full 5000 blocks, the posterior mean of $\alpha$ is 1.34 and the lower bound of the 95\% credible interval is 1.29, so we have strong evidence that $\alpha$ is not one and that a constant transaction rate is not appropriate. This is not surprising since Bitcoin usage has gone up over time. A block is around 10 minutes on average, so 5000 blocks takes a little over a month on average. It is possible that on a short enough time-scale, transaction rates are approximately constant. So we fit the gamma distribution to 1000 blocks at a time --- representing about a week --- by breaking the original 5000 blocks into five groups. For each of these groups the 95\% credible interval does not contain one --- the lowest lower bound is 1.17. Similarly for groups of 500 blocks, each representing about 3.5 days, the lowest lower bound is about 1.08. So we can safely conclude that the transaction rate is not constant. A likely reason for this is seasonality in transaction rates --- Bitcoin trades are probably more likely to happen during certain times of day than others, based on when relevant markets are open and when the bulk of Bitcoin users are awake. The {\it mean} transaction rate averaging over e.g. seasonality is probably approximately constant for time-scales this small, however. In any case, transaction rates are nonconstant even on short time-scales, which motivates modeling them as such.
 

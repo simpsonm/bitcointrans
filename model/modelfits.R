@@ -67,14 +67,13 @@ xtable(gsummary)
 
 ############## Full model fits
 
-nobs <- 1000
+nobs <- 500
 blockdatashort <- blockdata[(1000 - nobs + 1):1011,]
 lbs <- rep(0,nobs)
 for(i in 1:nobs){
   lbs[i] <- median(blockdatashort$min[i:(i+10)])
 }
 times <- blockdatashort$min[-c(1:11)]
-mbs <- blockdata$size[-c(1:11)]/1000000  ## convert to megabytes
 
 sum(lbs > times) ## check that each lower bound is below what it's bounding, should be 0
 
