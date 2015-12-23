@@ -67,7 +67,7 @@ xtable(gsummary)
 
 ############## Full model fits
 
-nobs <- 500
+nobs <- 1000
 blockdatashort <- blockdata[(1000 - nobs + 1):1011,]
 lbs <- rep(0,nobs)
 for(i in 1:nobs){
