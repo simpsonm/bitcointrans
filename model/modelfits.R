@@ -11,7 +11,7 @@ con <- dbConnect(RPostgres::Postgres(),dbname = 'toshi',
 
 dbListTables(con)
 
-res <- dbSendQuery(con, "select height, time, size, transactions_count from blocks order by height desc limit 5011")
+res <- dbSendQuery(con, "select branch, height, time, size, transactions_count from blocks where branch = 0 order by height desc limit 5011")
 while(!dbHasCompleted(res)){
   chunk <- dbFetch(res, n = 5)
   print(nrow(chunk))
