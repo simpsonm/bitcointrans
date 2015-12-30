@@ -99,3 +99,6 @@ bothreg <-lm(mean ~ sd + var,summary)
 summary(varreg)
 summary(sdreg)
 summary(bothreg)
+
+plot(summary$mean, summary$var)
+meanreg <- lm(var ~ mean + I(mean^2) + I(mean^3) - 1, data = summary)
