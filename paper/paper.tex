@@ -87,6 +87,35 @@ for $x>0$, $\alpha>0$, and $\beta>0$ with mean $\alpha/\beta$ and variance $\alp
 \label{tab:gammafit}
 \end{table}
 
+% latex table generated in R 3.2.3 by xtable 1.7-4 package
+% Wed Dec 30 12:33:51 2015
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Mean & 2.5\% & 97.5\% \\ 
+  \hline
+  $n=5000$ & 1.04 & 1.00 & 1.07 \\ 
+  $n=1000$, $g=1$ & 1.16 & 1.08 & 1.25 \\ 
+  $n=1000$, $g=2$ & 1.01 & 0.93 & 1.09 \\ 
+  $n=1000$, $g=3$ & 1.10 & 1.01 & 1.18 \\ 
+  $n=1000$, $g=4$ & 1.00 & 0.92 & 1.08 \\ 
+  $n=1000$, $g=5$ & 0.96 & 0.89 & 1.04 \\ 
+  $n=500$,  $g=1$ & 1.24 & 1.11 & 1.38 \\ 
+  $n=500$,  $g=2$ & 1.09 & 0.98 & 1.21 \\ 
+  $n=500$,  $g=3$ & 0.98 & 0.88 & 1.09 \\ 
+  $n=500$,  $g=4$ & 1.04 & 0.93 & 1.16 \\ 
+  $n=500$,  $g=5$ & 1.27 & 1.13 & 1.41 \\ 
+  $n=500$,  $g=6$ & 0.98 & 0.88 & 1.09 \\ 
+  $n=500$,  $g=7$ & 0.92 & 0.83 & 1.02 \\ 
+  $n=500$,  $g=8$ & 1.09 & 0.97 & 1.21 \\ 
+  $n=500$,  $g=9$ & 1.12 & 1.00 & 1.24 \\ 
+  $n=500$,  $g=10$ & 0.86 & 0.77 & 0.95 \\ 
+   \hline
+\end{tabular}
+\caption{Posterior mean and 95\% credible intervals for $\alpha$ from fitting a gamma distribution to block sizes of the last 5000 blocks in our database. For sample sizes less than 5000, blocks were broken into groups of equal size and the model was fit separately to each group. Sample size is indicated by $n$, group id by $g$. Each model was fit in RStan \citep{rstan-software:2015,stan-software:2015} using 4 chains, each with 4000 iterations, 2000 of which used for warmup/burn in. PRE 2015}
+\end{table}
+
 % OLD TABLE
 % latex table generated in R 3.2.2 by xtable 1.7-4 package
 % Mon Oct 12 10:44:18 2015
@@ -163,6 +192,22 @@ $\gamma$ & 0.0597 & 0.0012 & 0.0000 & 0.0574 & 0.0589 & 0.0597 & 0.0605 & 0.0621
    \hline
 \end{tabular}
  \caption{Results of fitting the measurement error model with stochastic measurement times. We use RStan \citep{rstan-software:2015,stan-software:2015} to fit the model, obtaining four chains each of 4000 iterations, 2000 of which used for warmup/burn in.}
+\end{table}
+
+% latex table generated in R 3.2.3 by xtable 1.7-4 package
+% Wed Dec 30 12:31:30 2015
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrrrrrr}
+  \hline
+ & Mean & SD & SE(Mean) & 2.5\% & 25\% & 50\% & 75\% & 97.5\% \\ 
+  \hline
+$\gamma$ & 0.0561 & 0.0009 & 0.0000 & 0.0543 & 0.0554 & 0.0561 & 0.0566 & 0.0578 \\ 
+  $\beta$ & 7.0450 & 0.4327 & 0.0046 & 6.2235 & 6.7486 & 7.0402 & 7.3299 & 7.9080 \\ 
+  $\sigma$ & 0.0025 & 0.0001 & 0.0000 & 0.0024 & 0.0025 & 0.0025 & 0.0026 & 0.0027 \\ 
+   \hline
+\end{tabular}
+ \caption{Results of fitting the measurement error model with stochastic measurement times. We use RStan \citep{rstan-software:2015,stan-software:2015} to fit the model, obtaining four chains each of 4000 iterations, 2000 of which used for warmup/burn in. PRE 2015}
 \end{table}
 
 %%% OLD MODEL FITS TABLE
@@ -255,6 +300,24 @@ $\beta = \infty$ & 0.0067 & 0.0357 & 0.0821 & 0.1353 & 0.1889 & 0.2397 & 0.2865 
    \hline
 \end{tabular}
 \caption{Probability of a full block under a variety of parameter values --- $\gamma$ is the mean transaction rate and $\beta$ is a dispersion parameter so that the variance of transaction rates is $\gamma/\beta$. In the first row the transaction rate is constant at $\hat{\gamma}$, in the second through fourth rows the transaction rate is stochastic with fixed mean $\hat{\gamma}$, and in the final row the transaction rate is stochastic and unknown with mean $\hat{\gamma}$.}
+\end{table}
+
+% latex table generated in R 3.2.3 by xtable 1.7-4 package
+% Wed Dec 30 12:32:39 2015
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrrrrrr}
+  \hline
+$E[\gamma] = \hat{\gamma} = $ & 0.02 & 0.03 & 0.04 & 0.05 & 0.06 & 0.07 & 0.08 & 0.09 \\ 
+  \hline
+$\beta = \infty$ & 0.0067 & 0.0357 & 0.0821 & 0.1353 & 0.1889 & 0.2397 & 0.2865 & 0.3292 \\ 
+  $\beta = 3\times\beta^{(0.5)}$ & 0.0103 & 0.0423 & 0.0891 & 0.1416 & 0.1938 & 0.2440 & 0.2892 & 0.3312 \\ 
+  $\beta = \beta^{(0.5)}$ & 0.0191 & 0.0549 & 0.1016 & 0.1519 & 0.2010 & 0.2478 & 0.2906 & 0.3303 \\ 
+  $\beta \sim p(\beta|x,t)$ & 0.0191 & 0.0553 & 0.1014 & 0.1516 & 0.2017 & 0.2483 & 0.2907 & 0.3305 \\ 
+  $(\beta,\gamma) \sim p(\beta,\gamma|x,t)$ & 0.0194 & 0.0550 & 0.1016 & 0.1517 & 0.2010 & 0.2472 & 0.2901 & 0.3310 \\ 
+   \hline
+\end{tabular}
+\caption{Probability of a full block under a variety of parameter values --- $\gamma$ is the mean transaction rate and $\beta$ is a dispersion parameter so that the variance of transaction rates is $\gamma/\beta$. In the first row the transaction rate is constant at $\hat{\gamma}$, in the second through fourth rows the transaction rate is stochastic with fixed mean $\hat{\gamma}$, and in the final row the transaction rate is stochastic and unknown with mean $\hat{\gamma}$. PRE 2015}
 \end{table}
 
 %%%% OLD BLOCK FILL PROBABILITIES TABLE
