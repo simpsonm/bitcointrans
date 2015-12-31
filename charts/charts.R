@@ -73,9 +73,9 @@ dev.off()
 # we have a problem because fees should be an unsigned integer
 
 # LET'S PLOT MEAN vs. VARIANCE FOR BLOCK SIZES
-max <- length(blocks$height)
+maxheight <- length(blocks$height)
 # overwriting
-max <- 358000
+maxheight <- 358000
 
 id <- integer()
 mean <- numeric()
@@ -83,7 +83,7 @@ var <- numeric()
 sd <- numeric()
 summary <- data.frame(c(id, mean, var, sd))
 
-sequence <- seq(1,max,by=500)
+sequence <- seq(1,maxheight,by=500)
 for (i in 1:as.integer(length(blocks$height)/500)) {
 	mean <- mean(blocks$size[blocks$height >= sequence[i] & blocks$height < sequence[i] + 500])
 	var <- var(blocks$size[blocks$height >= sequence[i] & blocks$height < sequence[i] + 500])
@@ -102,3 +102,38 @@ summary(bothreg)
 
 plot(summary$mean, summary$var)
 meanreg <- lm(var ~ mean + I(mean^2) + I(mean^3) - 1, data = summary)
+
+
+
+weights <- diff(blocks$time)
+weights[weights < 0] <- 1
+sizes <- blocks$size[-1]
+heights <- blocks$height[-1]
+
+library(Hmisc)
+
+sequence <- seq(1,maxheight,by=500)
+weightedsummary <- NULL
+for(i in 1:length(sequence)){
+  tempsizes <- sizes[heights >= sequence[i] & heights < sequence[i] + 500]
+  tempweights <- weights[heights >= sequence[i] & heights < sequence[i] + 500]
+  tempmean <- wtd.mean(tempsizes, tempweights, TRUE)
+  tempvar <- wtd.var(tempsizes, tempweights, TRUE)
+  tempsd <- sqrt(tempvar)
+  totalweight <- sum(tempweights)
+  weightedsummary <- rbind(weightedsummary,c(i,tempmean,tempvar,tempsd,totalweight))
+}
+colnames(weightedsummary) <- c("id", "mean", "var", "sd", "wt")
+weightedsummary <- data.frame(weightedsummary)
+
+plot(weightedsummary$mean, weightedsummary$var)
+
+weightedreg1 <- lm(var ~ mean - 1, data = weightedsummary, weights = wt)
+weightedreg2 <- lm(var ~ mean + I(mean^2) - 1, data = weightedsummary, weights = wt)
+weightedreg3 <- lm(var ~ mean + I(mean^2) + I(mean^3) - 1, data = weightedsummary, weights = wt)
+weightedreg4 <- lm(var ~ mean + I(mean^2) + I(mean^3) + I(mean^4) - 1, data = weightedsummary, weights = wt)
+
+summary(weightedreg1)
+summary(weightedreg2)
+summary(weightedreg3)
+summary(weightedreg4)
