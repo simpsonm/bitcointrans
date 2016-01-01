@@ -93,9 +93,9 @@ for (i in 1:as.integer(length(blocks$height)/500)) {
 colnames(summary) <- c("id", "mean", "var", "sd")
 plot(summary$mean, summary$sd)
 
-varreg <- lm(mean ~ var,summary)
+varreg <- lm(mean ~ var + I(var^2),summary)
 sdreg <- lm(mean ~ sd,summary)
-bothreg <-lm(mean ~ sd + var,summary)
+bothreg <-lm(mean ~ sd + var + I(var^2),summary)
 summary(varreg)
 summary(sdreg)
 summary(bothreg)
