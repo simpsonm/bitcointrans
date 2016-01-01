@@ -8,3 +8,6 @@
 *.synctex.gz
 *.Rapp.history
 *.Rhistory
+data/blocks.csv
+
+data/blocks.Rda
