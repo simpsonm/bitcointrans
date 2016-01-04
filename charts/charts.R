@@ -3,39 +3,41 @@
 # devtools::install_github("rstats-db/DBI")
 # devtools::install_github("rstats-db/RPostgres")
 
-library(DBI)
-con <- dbConnect(RPostgres::Postgres(), dbname = "toshi", host = "toshi.cn6zzwcfsto5.us-east-1.rds.amazonaws.com", 
-	port = 5432, user = "readonly", password = "password")
 
-# LOAD ALL THE BLOCK HEADERS FROM THE MAIN CHAIN
-res <- dbSendQuery(con, "select * from blocks where branch=0")
-while (!dbHasCompleted(res)) {
-	chunk <- dbFetch(res, n = 5)
-	print(nrow(chunk))
-}
-blocks <- dbFetch(res)
-dbClearResult(res)
-dbDisconnect(con)
+### COMMENTED OUT TO PREVENT OVERWRITING DATA
+# library(DBI)
+# con <- dbConnect(RPostgres::Postgres(), dbname = "toshi", host = "toshi.cn6zzwcfsto5.us-east-1.rds.amazonaws.com", 
+	# port = 5432, user = "readonly", password = "password")
 
-
-# library(bit64)
-# unsigned <- function(x) {
-	# if (x >= 0) {
-		# return(as.integer64(x))
-	# } else {
-		# return(as.integer64(-x + 2147483648))
-	# }
+# # LOAD ALL THE BLOCK HEADERS FROM THE MAIN CHAIN
+# res <- dbSendQuery(con, "select * from blocks where branch=0")
+# while (!dbHasCompleted(res)) {
+	# chunk <- dbFetch(res, n = 5)
+	# print(nrow(chunk))
 # }
+# blocks <- dbFetch(res)
+# dbClearResult(res)
+# dbDisconnect(con)
 
-# CLEANING UP AND SAVING THE DATA
-blocks$created_at <- NULL
-blocks$id <- NULL
-blocks <- blocks[order(blocks$height), ]
-# foo <- lapply(blocks$fees, unsigned)
-save(blocks, file = "~/Documents/Research/Block Size/bitcointrans/data/blocks.Rda")
-blocks$work <- vapply(blocks$work, paste, collapse = ", ", character(1L))
-write.table(blocks, file = "~/Documents/Research/Block Size/bitcointrans/data/blocks.csv", sep = ",", col.names = NA, 
-	qmethod = "double")
+
+# # library(bit64)
+# # unsigned <- function(x) {
+	# # if (x >= 0) {
+		# # return(as.integer64(x))
+	# # } else {
+		# # return(as.integer64(-x + 2147483648))
+	# # }
+# # }
+
+# # CLEANING UP AND SAVING THE DATA
+# blocks$created_at <- NULL
+# blocks$id <- NULL
+# blocks <- blocks[order(blocks$height), ]
+# # foo <- lapply(blocks$fees, unsigned)
+# save(blocks, file = "~/Documents/Research/Block Size/bitcointrans/data/blocks.Rda")
+# blocks$work <- vapply(blocks$work, paste, collapse = ", ", character(1L))
+# write.table(blocks, file = "~/Documents/Research/Block Size/bitcointrans/data/blocks.csv", sep = ",", col.names = NA, 
+	# qmethod = "double")
 
 
 load("~/Documents/Research/Block Size/bitcointrans/data/blocks.Rda")
