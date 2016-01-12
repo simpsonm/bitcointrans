@@ -9,12 +9,12 @@
 This note describes the MCMC algorithm used to fit the overflow model. The bulk of this material may end up in a technical appendix or as a section of the paper. Section \ref{sec:model} briefly describes the model and section \ref{sec:mcmc} describes the MCMC strategy for computing the posterior distribution.
 
 \section{The Overflow Model}\label{sec:model}
-The overflow model assumes we observe several pieces of data, 1) a noisy measurement of the arrival time of block $k$, $t_k$, measured in minutes since the zero'th block, 2) the number of transactions in block $k$, $M_k - M_{k-1}$ so that $M_k$ is the number of transactions on the entire block chain up to and including block $k$, and 3) the amount of data the transactions require to be stored in the block, $D_k$, measured in MBs, all observed for $k=1,2,\dots,n_{b}$.
+The overflow model assumes we observe several pieces of data: 1) a noisy measurement of the arrival time of block $k$ measured in minutes since the zero'th block and denoted by $t_k$, 2) the number of transactions in block $k$ denoted by $M_k - M_{k-1}$ so that $M_k$ is the number of transactions on the entire block chain up to and including block $k$, and 3) the amount of transaction data stored in block $k$ measured in MBs and denoted by $D_k$, all observed for $k=1,2,\dots,n_{b}$.
 
 \subsection{Measurement error for block arrival times}
-Let $m_k = \mathrm{median}(t_{k - 1:11})$ where $t_{k-1:11} = (t_{k-11}, t_{k-10},\dots,t_{k-1})'$. Then by design $t_k > m_k$ for all $k$. Let $\tau_k$ denote the actual arrival time of the $k$'th block. Then for $k=1,2,\dots,n_{b}$ $t_k$ has a truncated normal distribution:
+Let $m_k = \mathrm{median}(t_{k - 1:11})$ where $t_{k-1:11} = (t_{k-11}, t_{k-10},\dots,t_{k-1})'$. Then by design $t_k > m_k$ for all $k$. Let $\tau_k$ denote the actual arrival time of the $k$'th block. Then for $k=1,2,\dots,n_{b}$, $t_k$ has a truncated normal distribution:
 \begin{align*}
-\log t_k |t_{1:(k-1)}, \tau_{1:n_{b}},\sigma^2 \sim N(\log\tau_k, \sigma^2)1(t_k > m_k).
+t_k |t_{1:(k-1)}, \tau_{1:n_{b}},\sigma^2 \sim N(\tau_k, \sigma^2)1(t_k > m_k).
 \end{align*}
 
 \subsection{Block interarrival times}
@@ -24,7 +24,7 @@ By the design of the bitcoin protocol, blocks are a Poisson process with rate $1
 \end{align*}
 
 \subsection{Transaction arrival process}
-We will assume that transactions arrive according to a non-homogenous Poisson process. Let $N(\tau)$ denote the number of transaction in the entire chain up to time $\tau$, and let $\lambda(\tau)$ denote some intensity function. Then any collection of non-overlapping increments $\left\{N(\tau_i + \delta_i) - N(\tau_i)\right\}$ are independent with distribution
+We will assume that transactions arrive according to a non-homogenous Poisson process. Let $N(\tau)$ denote the number of transactions that have arrive by time $\tau$, and let $\lambda(\tau)$ denote some intensity function such that $\lambda(\tau) > 0$ for all times $\tau$. Then any collection of non-overlapping increments $\left\{N(\tau_i + \delta_i) - N(\tau_i)\right\}$ where $\delta_i>0$ for all $i$ are independent with distribution
 \begin{align*}
 N(\tau_i + \delta_i) - N(\tau_i) \sim Poi(\Lambda(\tau_i + \delta_i) - \Lambda(\tau_i))
 \end{align*}
@@ -32,26 +32,26 @@ where
 \begin{align*}
 \Lambda(\tau) = \int_0^\tau \lambda(u)du.
 \end{align*}
-Suppose the intensity function is a gamma process with shape function $\phi\Psi(\tau)$ and rate parameter $\phi$. In other words
+Suppose the intensity function is a gamma process with shape function $\Psi(\tau)$ and rate parameter $\phi$. In other words
 \begin{align*}
-\Lambda(\tau_i + \delta_i) - \Lambda(\tau_i) \stackrel{ind}{\sim} G(\phi[\Psi(\tau_i + \delta_i) - \Psi(\tau_i)], \phi)
+\Lambda(\tau_i + \delta_i) - \Lambda(\tau_i) \stackrel{ind}{\sim} G(\Psi(\tau_i + \delta_i) - \Psi(\tau_i), \phi)
 \end{align*}
-with mean $\Psi(\tau_i + \delta_i) - \Psi(\tau_i)$. Then for block $k=1,2,\dots,n_{b}$ define $\lambda_k = \Lambda(\tau_k) - \Lambda(\tau_{k-1})$, $\eta_k = N(\tau_k) - N(\tau_{k-1})$, and $\psi_k = \Psi(\tau_k) - \Psi(\tau_{k-1})$. Then assume
+with mean $[\Psi(\tau_i + \delta_i) - \Psi(\tau_i)]/\phi$. Then for block $k=1,2,\dots,n_{b}$ define $\lambda_k = \Lambda(\tau_k) - \Lambda(\tau_{k-1})$, $\eta_k = N(\tau_k) - N(\tau_{k-1})$, and $\psi_k = \Psi(\tau_k) - \Psi(\tau_{k-1})$. Then assume
 \begin{align*}
 \eta_k | \lambda_{1:n_{b}} &\stackrel{ind}{\sim} Poi(\lambda_k)\\
-\lambda_k|\delta_{1:n_{b}} &\stackrel{ind}{\sim} G(\phi\psi_k, \phi).
+\lambda_k|\delta_{1:n_{b}} &\stackrel{ind}{\sim} G(\psi_k, \phi).
 \end{align*}
 
-In order for the gamma process to be well defined we require $\phi>0$ and $\Psi(\tau)$ to be nondecreasing and right continuous with $\Psi(0)=0$. An easy way to achieve this is to define $\Psi(\tau) = \int_0^\tau\psi(t)dt$ where $\psi(t)$ is continuous and nonnegative. Then $\psi(t)$ is the intensity of the Gamma process, but is also intimately related to the intensity of the Poission process. The mean of $N(\tau + \delta) - N(\tau)$ is 
+In order for the gamma process to be well defined we require $\phi>0$ and $\Psi(\tau)$ to be nondecreasing and right continuous with $\Psi(0)=0$. An easy way to achieve this is to define $\Psi(\tau) = \int_0^\tau\psi(t)dt$ where $\psi(t)$ is continuous and nonnegative. While $\psi(t)$ can be thought of as the intensity of the Gamma process it is also intimately related to the intensity of the Poission process. The mean of $N(\tau + \delta) - N(\tau)$ is 
 \begin{align*}
 E[N(\tau + \delta) - N(\tau)] &= E\{E[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\} = E[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
- &= \Psi(\tau + \delta) - \Psi(\delta) = \int_{\tau}^{\tau + \delta}\psi(t)dt.
+ &= [\Psi(\tau + \delta) - \Psi(\delta)]/\phi = \int_{\tau}^{\tau + \delta}\psi(t)dt/\phi.
 \end{align*}
-In this way, $\psi(t)$ can be seen as the expected intensity function of the $N(\tau)$ process. The Gamma-Poisson structure also allows for a more flexible model on $N(\tau)$ by allowing for overdispersion. In a Poisson model the mean and variance are the same, but in this case they are proportional:
+In this way, $\psi(t)/\phi$ can be seen as the expected intensity function of the $N(\tau)$ process. The Gamma-Poisson structure also allows for a more flexible model on $N(\tau)$ by allowing for overdispersion. In a Poisson model the mean and variance are the same, but in this case they are proportional:
 \begin{align*}
 V[N(\tau + \delta) - N(\tau)] &= E\{V[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\} + V\{E[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\}\\
-&= E[\Lambda(\tau + \delta) - \Lambda(\tau)] + Var[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
-&= [\Psi(\tau + \delta) - \Psi(\tau)](1 + 1/\phi) = \frac{\phi + 1}{\phi}\int_{\tau}^{\tau + \delta}\psi(t)dt.
+&= E[\Lambda(\tau + \delta) - \Lambda(\tau)] + V[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
+&= [\Psi(\tau + \delta) - \Psi(\tau)](1/\phi + 1/\phi^2) = \frac{\phi + 1}{\phi}E[N(\tau + \delta) - N(\tau)].
 \end{align*}
 This allows for overdispersion but not underdispersion since $(\phi + 1)/\phi\in[1,\infty)$ for $\phi\ge 0$.
 
@@ -62,14 +62,14 @@ To complete this portion of the model we need to specify $\psi(t)$. A flexible s
 \psi_k &= \frac{e^{\beta_1 + \tau_{k-1}\beta_2}}{\beta_2}\left(e^{\delta_k\beta_2} - 1\right).
 \end{align*}
 \subsection{Transaction data}
-Let $i=1,2,\dots,n_{trans}$ index transactions and $d_i$ denote the amount of data for transaction $i$ measured in MBs. Then we assume that for $i=1,2,\dots,n_{trans}$
+Let $i=1,2,\dots,n_d \equiv N_{n_b}$ index transactions and $d_i$ denote the amount of data for transaction $i$ measured in MBs. Then we assume that for $i=1,2,\dots,n_d$
 \begin{align*}
 d_i \stackrel{iid}{\sim} G(\alpha_d,\beta_d)
 \end{align*}
-with mean $\alpha_d/\beta_d$. Along with the Poisson process for $N(\tau)$, this implies that $D(\tau)$, the amount of transaction data that has arrived by time $\tau$, is a compound non-homogenous Poisson process conditional on $\Lambda(\tau)$.
+with mean $\alpha_d/\beta_d$. Along with the Poisson process for $N(\tau)$ this implies that the amount of transaction data that has arrived by time $\tau$, $D(\tau)$, is a compound non-homogenous Poisson process conditional on $\Lambda(\tau)$.
 
 \subsection{Overflow and observations of $M_k$ and $D_k$}
-Each block has an upper limit for the amount of transaction data it can hold defined by the block miner. Denote this upper limit by $\bar{D}_k$ --- because different miners use different limits and the same miner uses different limits at different times, each block has its own upper limit. Then the number of transactions in blocks $1,2,\dots,k$ combined, $M_k$, could potentially be less than the number of transactions that have arrive by the time the $k$'th block arrives, $N_k$. Specifically:
+Each block has an upper limit for the amount of transaction data it can hold defined by the block miner. Denote this upper limit by $\bar{D}_k$ --- because different miners use different limits and the same miner uses different limits at different times, each block has its own upper limit. Then the number of transactions in blocks $1,2,\dots,k$ combined, $M_k$, could potentially be less than the number of transactions that have arrived by the time the $k$'th block arrives, $N_k$. Specifically:
 \begin{align*}
 M_k &= \max\left\{m\in\left\{M_{k-1}, M_{k-1} + 1, \dots, N_k\right\}: \sum_{i = M_{k-1} + 1}^m d_i \le \bar{D}_k\right\}
 \end{align*}
@@ -77,66 +77,98 @@ so that
 \begin{align*}
 D_k &= \sum_{i = M_{k-1} + 1}^{M_k} d_i
 \end{align*}
-with the convention that empty summations are defined as zero, i.e. $\sum_{i=5}^4d_i \equiv 0$. Finally, the upper limits are modeled as a categorical distribution over a set of prespecified possible limits, $\Delta_1,\dots,\Delta_{n_{limits}}$ with probability $p_{ik} = P(\bar{D}_k = \Delta_i)$, $\sum_ip_{ik} = 1$ and $p_{ik} \ge 0$. In other words
+with the convention that empty summations are defined as zero, i.e. $\sum_{i=5}^4d_i \equiv 0$. 
+
+\section{Priors}
+The model has the following unknown parameters: $\sigma^2$, $\phi$, $\beta$, $\alpha_d$, $\beta_d$, and $\bar{D}_k$ for $k=1,2,\dots,n_b$. We will suppose that these parameters are mutually independent in the prior, i.e.
 \begin{align*}
-\bar{D}_k\stackrel{ind}{\sim} Cat(\Delta_{1:n_{limits}}, p_{1:n_{limits},k}).
+p(\sigma^2,\phi,\beta,\alpha_d,\beta_d,\bar{D}_1,\dots,\bar{D}_{n_{b}}) = p(\sigma^2)p(\phi)p(\beta)p(\alpha_d)p(\beta_d)p(\bar{D}_1)\hdots p(\bar{D}_{n_{b}}).
+\end{align*}
+
+\subsection{Prior on $\sigma^2$}
+The expected size of the measurement error on $t_k$ is controlled by $\sigma^2$ --- the larger $\sigma^2$, the farther away we expect $t_k$ to be from $\tau_k$. We will use a half-$t$ prior on $\sigma$ which can be written as the following prior on $\sigma^2$:
+\begin{align*}
+\sigma^2|\omega &\sim IG(v/2, \omega); && \omega \sim G(1/2, s^2/2).
+\end{align*}
+This yields a $t_{v}(0,s^2)1(\sigma>0)$ prior on $\sigma$ where $s^2$ is a scale parameter and $v$ is a degrees of freedom parameter. We use $v=1$ so that the prior on $\sigma$ has a half-Cauchy distribution with median $s$. To gain some intuition in order to set an appropriate value for $s$, suppose that the measurement error distribution was not truncated. Then we would expect $68\%$ of observed block arrival times to be within $\sigma$ of the actual arrival time. A reasonable a priori guess for $\sigma$ is then one minute, so we set $s=1$ so that the median value of $\sigma$ in its prior is one. This prior is only weakly informative --- the right tail is gently sloped so that the data will quickly overwhelm the prior as observations pile up [CITE GELMAN VARIANCE PAPER]. 
+
+\subsection{Prior on $\phi$}
+The conditionally conjugate prior for $\phi$ is a gamma distribution, so we will suppose that $\phi \sim G(a_{\phi}, b_{\phi})$. To choose $a_\phi$ and $b_\phi$ recall that $\phi$ is a dispersion parameter:
+\begin{align*}
+V[N(\tau)|\phi,\Psi(\tau)] = \frac{\phi + 1}{\phi}E[N(\tau)|\phi,\Psi(\tau)] = \frac{\phi + 1}{\phi}\frac{\Psi(\tau)}{\phi}.
+\end{align*}
+Setting $\phi = 1$ means that the variance of $N(\tau)$ is twice its mean. Absent strong prior information about $\phi$, we will center our prior on $2$ with a high level of uncertainty. The mean of the gamma distribution is $a_\phi/b_\phi$ with variance $a_\phi/b_\phi^2$, so we will set $b_\phi = 1/100$ to reflect a high degree of uncertainty, and $a_\phi = 1/50$ so that $a_\phi/b_\phi = 2$.
+
+\subsection{Prior on $\bm{\beta}$}
+As we will see in the next section, there is no convenient conditionally conjugate form for $\bm{\beta}$, so there is no computational trade-off associated with choosing a prior which more accurately reflects prior knowledge. We will consider $\bm{\beta}$ much like a regression parameter and set
+\begin{align*}
+\bm{\beta} \sim N(\bm{b}_\beta, \bm{S}_\beta)
+\end{align*}
+where $\bm{b}_\beta$ is a mean vector and $\bm{S}_\beta$ is a covariance matrix. We will use a weakly informative prior with $\bm{b}_\beta = \bm{0}$ and $\bm{S}_\beta = s^2_\beta\bm{I}$ where $s_\beta = 100$.  [MAYBE SOMETHING WITH FATTER TAILS HERE? MAYBE NOTE THAT NONINFORMATIVE PRIOR IS NOT A GOOD IDEA SINCE WE WANT TO GUARANTEE POSTERIOR PROPRIETY --- SAME FOR $s_\beta$ TOO LARGE (VIVEK'S PAPER)]
+
+\subsection{Priors on $\alpha_d$ and $\beta_d$}
+
+\subsection{Priors on $\bar{D}_k$'s}
+
+Finally, the upper limits are modeled as a categorical distribution over a set of prespecified possible limits, $\Delta_1,\dots,\Delta_{n_{lim}}$ with probability $p_{ik} = P(\bar{D}_k = \Delta_i)$, $\sum_ip_{ik} = 1$ and $p_{ik} \ge 0$. In other words
+\begin{align*}
+\bar{D}_k\stackrel{ind}{\sim} Cat(\Delta_{1:n_{lim}}, p_{1:n_{lim},k}).
 \end{align*}
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
 
-In order to simulate from the posterior we construct a Gibbs sampler using data augmentation to expand the state space and Metropolis steps where appropriate. We use data augmentation in two ways. First, in order to more effectively deal with the truncated distribution in the measurement error model for block arrival times we introduce $\tilde{\bm{t}}_k=(\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}, t_k)$ as the original $t_k$ along with $\tilde{n}_k$ draws from the untruncated lognormal distribution for $t_k$ that occurred before $t_k$ was drawn from the restricted support. Second, the models for $\eta_{1:n_{b}}$ and $d_{1:n_{trans}}$ induce a model for $(M_{1:n_{b}},D_{1:n_{trans}})$ since the latter are a detrministic function of the former, but this model is not easy work with. Instead, we explicitly use $\eta_{1:n_{b}}$ and $d_{1:n_{trans}}$ in the Gibbs sampler as additional data augmentation.
+In order to simulate from the posterior we construct a Gibbs sampler using data augmentation to expand the state space and Metropolis steps where appropriate. We use data augmentation in two ways. First, in order to more effectively deal with the truncated distribution in the measurement error model for block arrival times we introduce $\tilde{\bm{t}}_k=(\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}, t_k)$ as the original $t_k$ along with $\tilde{n}_k$ draws from the untruncated normal distribution for $t_k$ that occurred before $t_k$ was drawn from the restricted support. Second, the models for $\eta_{1:n_{b}}$ and $d_{1:n_d}$ induce a model for $(M_{1:n_{b}},D_{1:n_d})$ since the latter are a detrministic function of the former, but this model is not easy work with. Instead, we explicitly use $\eta_{1:n_{b}}$ and $d_{1:n_d}$ in the Gibbs sampler as additional data augmentation.
 
-\subsection{Data augmentation for truncated distributions}
+\subsection{Data augmentation for truncated distributions --- $\tilde{n}_k$ and $\tilde{t}_k$}
 For block $k=1,2,n_{b}$ the measurement error model on block arrival times is
 \begin{align*}
-\log t_k \sim N(\log\tau_k,\sigma^2)1(t_k > m_k)
+t_k|t_{1:(k-1)} \sim N(\tau_k,\sigma^2)1(t_k > m_k)
 \end{align*}
 where $m_k = \mathrm{median}(t_{k - 1:11})$ with density 
 \begin{align*}
-p(\log\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2) \propto \sigma^{-n_{b}}\frac{\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}(\log t_K - \log \tau_k)^2\right]}{\prod_{k=1}^{n_{b}}\left[1 - \Phi\left(\frac{\log m_k - \log\tau_k}{\sigma}\right)\right]}
+p(\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2) \propto \sigma^{-n_{b}}\frac{\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}(t_k - \tau_k)^2\right]}{\prod_{k=1}^{n_{b}}\left[1 - \Phi\left(\frac{m_k - \tau_k}{\sigma}\right)\right]}
 \end{align*}
-where $\Phi(.)$ is the standard normal cdf. Drawing from the full conditional distributions of $\sigma^2$ and $\tau_k$ can be challenging since both parameters enter into the normalizing constant of $p(\log\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2)$. Consider an underlying process which gives rise to the truncated distribution --- instead of simply drawing $t_k$ from the truncated lognormal distribution, this process draws from the untruncated lognormal distribution until it obtains a draw from the restricted region of the parameter space, i.e. until it successfully obtains a $t_k$ such that $t_k > m_k$. Let $\tilde{n}_k$ be the number of failures before the observed success $t_k$. Then $\tilde{n}_k$ has a negative binomial distribution, specifically $\tilde{n}_k \sim NB(1, p_k)$ with density
+where $\Phi(.)$ is the standard normal cdf. Drawing from the full conditional distributions of $\sigma^2$ and $\tau_k$ can be challenging since both parameters enter into the normalizing constant of $p(\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2)$. Consider an underlying process which gives rise to the truncated distribution --- instead of simply drawing $t_k$ from the truncated normal distribution, this process draws from the untruncated normal distribution until it obtains a draw from the restricted region of the parameter space, i.e. until it successfully obtains a $t_k > m_k$. Let $\tilde{n}_k$ be the number of failures before the observed success $t_k$. Then $\tilde{n}_k$ has a negative binomial distribution, specifically $\tilde{n}_k \sim NB(1, \rho_k)$ with density
 \begin{align*}
-p(\tilde{n}_k|\tau_k,\sigma^2) = p_k^{\tilde{n}_k}(1 - p_k)
+p(\tilde{n}_k|\tau_k,\sigma^2) = \rho_k^{\tilde{n}_k}(1 - \rho_k)
 \end{align*}
-where $p_k$ is the probability of failure, i.e. $p_k = \Phi([\log m_k - \log \tau_k]/\sigma)$. Conditional on $\tilde{n}_k$ the density of the $\tilde{n}_k$ failures, $\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}$, is again truncated lognormal, but this time truncated to the opposite end of the parameter space. That is for $i = 1,\dots,\tilde{n}_k$
+where $\rho_k$ is the probability of failure, i.e. $\rho_k = \Phi([m_k - \tau_k]/\sigma)$. Conditional on $\tilde{n}_k$ the density of the $\tilde{n}_k$ failures, $\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}$, is again truncated normal, but this time truncated to the opposite end of the parameter space. That is for $i = 1,\dots,\tilde{n}_k$
 \begin{align*}
-\log\tilde{t}_{ik}\stackrel{iid}{\sim}N(\log\tau_k,\sigma^2)1(t_k < m_k).
+\tilde{t}_{ik}\stackrel{iid}{\sim}N(\tau_k,\sigma^2)1(t_k < m_k).
 \end{align*}
-
 So the data augmentation step of the Gibbs sampler consists of the following substeps: for $k=1,2,\dots,n_{b}$,
 \begin{enumerate}
-\item Draw $\tilde{n}_k \sim NB(1,p_k)$ where $p_k = \Phi([\log m_k - \log \tau_k]/\sigma)$.
-\item If $\tilde{n}_k > 0$, for $i=1,\dots,\tilde{n}_k$ draw $\tilde{t}_{ik} \sim N(\log\tau_k,\sigma^2)1(t_k < m_k)$ and form $\tilde{\bm{t}}_k = (\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}, t_k)'$.
+\item Draw $\tilde{n}_k \sim NB(1,\rho_k)$ where $\rho_k = \Phi([ m_k -  \tau_k]/\sigma)$.
+\item If $\tilde{n}_k > 0$, for $i=1,\dots,\tilde{n}_k$ draw $\tilde{t}_{ik} \sim N(\tau_k,\sigma^2)1(t_k < m_k)$ and form $\tilde{\bm{t}}_k = (\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}, t_k)'$.
 \end{enumerate}
 For simplicity in the other Gibbs steps define $\tilde{t}_{\tilde{n}_k + 1,k}\equiv t_k$.
 
-It is tempting to imbue $\tilde{n}_k$ and $\tilde{t_{ik}}$ with some interpretation relative to the model, e.g. as is [CITE GELMAN PAPER]. For example, $\tilde{n}_k$ may represent the number of blocks that were rejected by the Bitcoin protocol for having a timestamp earlier than the median of the previous elevent blocks. While tempting this interpretation is not strictly speak correct. When a block is rejected by the protocol a new block does not appear instantaneously since it takes time for another miner to discover the block. So the arrival times and thus measurement error distributions of the rejected block and the accepted block are not the same. While the interpretation is not correct, it is good to be inspired by computational tricks to create better model [CITE SAME GELMAN PAPER] and perhaps something similar to this negative binomial structure can be used to add rejected blocks as a component of the model.
+It is tempting to imbue $\tilde{n}_k$ and $\tilde{t_{ik}}$ with some interpretation relative to the model, e.g. as in [CITE GELMAN PAPER]. For example, $\tilde{n}_k$ may represent the number of blocks that were rejected by the Bitcoin protocol for having a timestamp earlier than the median of the previous elevent blocks. While tempting this interpretation is not strictly speaking correct. When a block is rejected by the protocol a new block does not appear instantaneously since it takes time for another miner to discover the block. So the arrival times and thus measurement error distributions of the rejected block and the accepted block are not the same. While the interpretation is not correct, it is good to be inspired by computational tricks to create better model [CITE SAME GELMAN PAPER] and perhaps something similar to this negative binomial structure can be used to add rejected blocks as a component of the model, though we do not explore this possibility here.
 
-\subsection{measurement error variance}
+\subsection{Measurement error variance --- $\sigma^2$}
 The full conditional distribution of the measurement error variance, $\sigma^2$, depends only on $\tilde{\bm{t}}_{1:n_{b}}$ and $\tau_{1:n_{b}}$. It is
 \begin{align*}
-p(\sigma^2|...) \propto \sigma^{-(n_{b} + \sum_{k=1}^{n_{b}}\tilde{n}_k)}\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\log \tilde{t}_{ik} - \log\tau_k)^2\right]p(\sigma^2)
+p(\sigma^2|...) \propto \sigma^{-(n_{b} + \sum_{k=1}^{n_{b}}\tilde{n}_k)}\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2\right]p(\sigma^2)
 \end{align*}
-where $p(\sigma^2)$ is the density of the prior distribution on $\sigma^2$. We will suppose that $\sigma$ has a half-$t$ prior, $\sigma \sim t_\nu(S)1(\sigma>0)$ with degrees of freedom and scale parameter $S$. This prior is equivalent to the marginal prior on $\sigma$ when $\sigma^2|\omega \sim IG(\nu/2, \omega)$ and $\omega \sim G(1/2, 1/(\nu S^2))$. Then letting $a_\sigma = (n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k)/2$ and $b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\log \tilde{t}_{ik} - \log\tau_k)^2$ the full conditional distribution of $(\sigma^2,\omega)$ is
+where $p(\sigma^2)$ is the density of the prior distribution on $\sigma^2$. With the half-$t$ prior on $\sigma$ discussed above and letting $a_\sigma = (n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k)/2$ and $b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2$ the full conditional distribution of $(\sigma^2,\omega)$ is
 \begin{align*}
-p(\sigma^2,\omega|...) \propto (\sigma^2)^{-(a_\sigma+\nu)/2-1}\left[-\frac{b_\sigma}{\sigma^2}\right]\exp\left[-\frac{\omega}{\sigma^2}\right]\omega^{(\nu + 1)/2 - 1}\exp\left[-\frac{\omega}{\nu S^2}\right].
+p(\sigma^2,\omega|...) \propto (\sigma^2)^{-(a_\sigma+v)/2-1}\exp\left[-\frac{b_\sigma}{\sigma^2}\right]\exp\left[-\frac{\omega}{\sigma^2}\right]\omega^{(v + 1)/2 - 1}\exp\left[-\frac{\omega}{v s^2}\right].
 \end{align*}
 So we draw $\sigma^2$ and $\omega$ in two separate Gibbs steps:
 \begin{enumerate}
-\item Draw $\omega \sim G\left(\frac{\nu + 1}{2}, \frac{1}{\sigma^2} + \frac{1}{\nu S^2}\right)$ and form
+\item Draw $\omega \sim G\left(\frac{v + 1}{2}, \frac{1}{\sigma^2} + \frac{1}{v s^2}\right)$ and form
 \begin{align*}
-a_\sigma = n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k &&\mbox{  and  }&& b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\log \tilde{t}_{ik} - \log\tau_k)^2/2;
+a_\sigma = n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k &&\mbox{  and  }&& b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2/2;
 \end{align*}
-\item Draw $\sigma^2 \sim  IG([a_\sigma + \nu]/2, b_\sigma + \omega)$.
+\item Draw $\sigma^2 \sim  IG\left(\frac{a_\sigma + v}{2}, b_\sigma + \omega\right)$.
 \end{enumerate}
 
-\subsection{block arrival times}
+\subsection{Block arrival times --- $\tau_k$}
 The full conditional distribution of the block arrival times is more complicated:
 \begin{align*}
-p(\bm{\tau}_{1:n_{b}}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\log\tilde{t}_{ik} - \log\tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\frac{\phi^{\phi[\Psi(\tau_k) - \Psi(\tau_{k-1})]}}{\Gamma\left(\phi[\Psi(\tau_k) - \Psi(\tau_{k-1})]\right)}\lambda_k^{\phi[\Psi(\tau_k)-\Psi(\tau_{k-1})] - 1}
+p(\bm{\tau}_{1:n_{b}}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\frac{\phi^{\Psi(\tau_k) - \Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1}) - 1}
 \end{align*}
-where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e{-t}dt$ is the gamma function. Even $\Psi(\tau)$ is some nice, known form, this density is nonstandard because the $\tau_k$'s enter the Gamma function. As a result, we have several options for this step:
+where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the Gamma function. As a result, we are limited to several options for this step:
 \begin{enumerate}
 \item Draw each $\tau_k$ condtional on all the others using random walk Metropolis steps for $k=1,\dots,n_{b}$.
 \item Approximate the density of $\tau_k$ sufficiently well and use independent Metropolis steps for $k=1,\dots,n_{b}$.
@@ -150,25 +182,74 @@ Ideas:
 \item RW Metropolis and tune the proposal variances.
 \end{enumerate}
 
-\subsection{transaction process dispersion}
-The transaction process dispersion parameter is $\phi$ --- $V[N(\tau)] = E[N(\tau)](1 + 1/\phi)$. It has the full conditional density
+\subsection{Transaction process dispersion --- $\phi$}
+The full conditional density of $\phi$ is
 \begin{align*}
-p(\phi|...) \propto \prod_{k=1}^{n_{b}}\frac{\phi^{\phi\psi_k}\lambda_k^{\phi\psi_k - 1}e^{\lambda_k\phi}}{\Gamma(\phi\psi_k)}p(\phi).
+p(\phi|...) \propto \prod_{k=1}^{n_{b}}\phi^{\psi_k}e^{\lambda_k\phi}p(\phi) \propto \phi^{\sum_{k=1}^{n_{b}}\psi_k}e^{\phi\sum_{k=1}^{n_{b}}\lambda_k}p(\phi).
 \end{align*}
-This is another complicated density, but ARS should work decently to sample from it. If not, various Metropolis options are available. Another option: transform so that $\phi$ is absorbed into the shape function. Then $\tilde{\phi}$ has the full conditional
-\begin{align*}
-p(\phi|...) \propto \phi^{\sum_{k=1}^{n_{b}}\psi_k}e^{\phi\sum_{k=1}^{n_{b}}\lambda_k}p(\phi).
-\end{align*}
-With $\phi \sim G(a_\phi, b_\phi)$ in the prior, this becomes
+With $\phi \sim G(a_\phi, b_\phi)$ in the prior, this is a Gamma density so the step is simple:
 \begin{enumerate}
 \item Draw $\phi \sim G\left(a_\phi + \sum_{k=1}^{n_{b}}\psi_k, b_{\phi} + \sum_{k=1}^{n_{b}}\lambda_k \right)$.
 \end{enumerate}
 
-\subsection{regression parameters}
+\subsection{Regression parameters --- $\bm{\beta}$}
+The full conditional posterior of $\bm{\beta}$ is closely connected to the functional form of the covariates in time. No matter the functional form, however, the density is complex and a Metropolis step is likely warranted. Recall that since we defined $\psi(t) = e^{\bm{z}(t)'\bm{\beta}}$ we have $\psi_k(\bm{\beta}) = \int_{\tau_{k-1}}^{\tau^k}e^{\bm{z}(t)'\bm{\beta}}dt$ --- in this subsection we write $\psi_k(\bm{\beta})$ to explicitly acknowledge that $\psi_k$ is a function of $\bm{\beta}$. Then the full conditional of $\bm{\beta}$ is
+\begin{align*}
+p(\bm{\beta}|\dots) \propto p(\bm{\beta})\prod_{k=1}^{n_b}\frac{\phi^{\psi_k(\bm{\beta})}\lambda_k^{\psi_k(\bm{\beta}) - 1}}{\Gamma[\psi_k(\bm{\beta})]}
+\end{align*}
+where in the prior $\bm{\beta} \sim p(\bm{\beta})$ independent of the other parameters. This density is complex and nonstandard since $\psi_k(\bm{\beta})$ enters the gamma function.
 
-\subsection{transaction arrival times and data amounts}
+\subsection{Transaction arrival times and sizes in MB --- $N(\tau_k)$ and $D_k$}
+First consider transaction sizes, $\bm{d}=(d_1,d_2,\dots,d_{n_d})'$. Let $\bm{d}_k$ denote the sizes of the $M_k - M_{k-1}$ transactions that were stored in block $k$ so that $\bm{d} = (\bm{d}_1',\dots,\bm{d}_{n_{b}}')'$. The full conditional distribution of the $\bm{d}_k$'s is
+\begin{align*}
+p(\bm{d}_{1:n_{b}}|...)\propto \prod_{k=1}^{n_b}\prod_{i=1}^{M_k - M_{k-1}} d_i^{\alpha_d - 1}e^{-d_i\beta_d}1\left(\sum_{i=1}^{M_k - M_{k-1}} d_{ik}= D_k\right)1\left(d_{1k} > \bar{D}_{k-1} - D_{k-1} \mathrm{\ or\ } M_{k-1} = N_{k-1}\right).
+\end{align*}
+The second indicator function is required because if $M_{k-1} < N_{k-1}$ then $N_{k-1} - M_{k-1}$ transactionss must have overflowed into block $k$. So the amount of data from the first transaction of block $k$, $d_{1k}$, must have been greater than the difference between the amount of data in block $k-1$ and the data cap for block $k-1$. Similarly if $M_{k-1} = N_{k-1}$ then we know there was no overflow into block $k$, so we have no reason to think that $d_{1k}$ has a restricted support. Let $\bm{o}_k = \bm{d}_k/D_k$. Then the $\bm{o}_k$'s have potentially truncated independent Dirichlet distributions. That is
+\begin{align*}
+p(\bm{o}_{1:n_b}|...)\propto \prod_{k=1}^{n_b} \prod_{i=1}^{M_k - M_{k-1}}o_{ik}^{\alpha_d - 1} 1\left(d_{1k} > [\bar{D}_{k-1} - D_{k-1}]/D_{k} \mathrm{\ or\ } M_{k-1} = N_{k-1}\right).
+\end{align*}
+So the $\bm{d}$ step to draw from $p(\bm{d}|...)$ is as follows: Let $\bm{1}_n$ denote an $n$-vector of ones. For $k=1,2,\dots,n_b$
+\begin{enumerate}
+\item Draw $\bm{o}_{k} \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1}})1\big(d_{1k} > 1[N_{k-1} - M_{k-1} > 0][\bar{D}_{k-1} - D_{k-1}]/D_{k}\big)$.
+\item Set $\bm{d}_k = \bm{o}_kD_k$.
+\end{enumerate}
+When the dirichlet distribution is truncated the draw can be accomplished by rejection sampling, though other methods are available. [FILL IN WHICHEVER METHOD I END UP USING --- PROBABLY AUGMENTATION LIKE MY BLOG POST]
 
-\subsection{transaction data amount parameters}
+To draw the $N_k$'s first note that their support is restricted by the value of the $M_k$'s. Specifically for $k=1,2,\dots,n_b$ and $N_0 = 0$ we have $M_k \le N_k \le N_{k+1}$. Second, when 
+\begin{align*}
+\sum_{i=1}^{M_k - M_{k-1} + 1}d_{M_{k-1} + i} \le \bar{D}_k
+\end{align*}
+we know that $N_k = M_k$ because otherwise transaction $M_k + 1$ would be in block $k$. If the summation is greater than $D_k$ then it is still possible that $N_k = M_k$ because transaction $d_{M_k + 1}$ could still have arrived later than block $k$. In that case, the density of $N_k$ given $N_{0:(k-1)}$ and all other parameters and processes is given by
+\begin{align*}
+p(N_k|N_{0:(k-1)}, \dots) \propto \frac{\lambda_k^{N_k - N_{k-1}}e^{-\lambda_k}}{(N_k - N_{k-1})!}1(N_k \ge M_k)1(N_k \ge N_{k-1}).
+\end{align*}
+In other words, $\eta_k = N_k - N_{k-1}$ has a truncated Poisson distribution where the support is restricted to $\{M_k - N_{k-1}, M_k - N_{k-1} + 1, \dots \}$. [PUT INSTRUCTIONS FOR HOW TO DRAW FROM THE TRUNCATED POISSON HERE] So we can draw from $p(\bm{N}_{1:n_b}|\dots)$ as follows: For $k=1,2,\dots,n_b$
+\begin{enumerate}
+\item If $\sum_{i=1}^{M_k - M_{k-1} + 1} d_{M_k + i} \le \bar{D}_k$ set $N_k = M_k$.
+
+Otherwise, draw $\eta_k \sim Poi(\lambda_k)1(\eta_k \ge M_k - N_{k-1})$ and set $N_k = N_{k-1} + \eta_k$.
+\end{enumerate}
+\subsection{Block size caps --- $\bar{D}_k$}
+Suppose for $k=1,\dots,n_b$ we have independent categorical priors on each of the $\bar{D}_k$'s. That is $\bar{D}_k \sim Cat(\bm{a}_{1:n_{cat}}, \bm{p}_{k})$ where $P(\bar{D}_k = a_i) = p_{ik}$ so that $p_{ik}\ge 0$ for $i=1,2,\dots,n_{cat}$ and $\sum_{i=1}^{n_{cat}}p_{ik} = 1$, both for $k=1,2,\dots,n_b$. In the posterior we learn about $\bar{D}_k$ through the observed $D_k$'s. The caps are then independent in their full conditional and for each block $k$, there are two possibilities:
+\begin{enumerate}
+\item When $N_k > M_k$, $D_k \le \bar{D}_k < D_k + d_{M_k+1}$.
+\item When $N_k = M_k$, $D_k \le \bar{D}_k$.
+\end{enumerate}
+In the first case, this should completely determine the value of $\bar{D}_k$ since transaction sizes are much smaller than the differences between possible caps. For both cases we simple draw $\bar{D}_k$ from a categorical distribution where the possible categories are only those remaining which satisfy the relevant constraint fiven above, and the probability of obtaining each category is proportional to its probability in the prior. For example, suppose only $a_1$ and $a_2$ satisfy the relevant constraint for $\bar{D}_k$. Then we draw $\bar{D}_k$ with probabilities $P(\bar{D}_k = a_1) = p_{1k}/(p_{1k} + p_{2k})$ and $P(\bar{D}_k = a_2) = p_{2k}/(p_{1k} + p_{2k})$.
+\subsection{Transaction data parameters --- $\alpha_d$ and $\beta_d$}
+The full conditional distribution of $(\alpha_d,\beta_d)$ is 
+\begin{align*}
+p(\alpha_d,\beta_d|...) \propto p(\alpha_d)p(\beta_d) \prod_{i=1}^{n_d}\frac{\beta_d^{\alpha_d}}{\Gamma(\alpha_d)}d_i^{\alpha_d - 1}e^{-\beta_dd_i}.
+\end{align*}
+When $\beta \sim G(a_\beta, b_\beta)$ in the prior, its full conditional becomes
+\begin{align*}
+p(\beta_d|...) \propto \beta_d^{\alpha_dn_d + a_{\beta} - 1}e^{-\beta_d\left(\sum_{i=1}^{n_d}d_i + b_{\beta}\right)},
+\end{align*}
+which is another gamma distribution. The full conditional of $\alpha_d$ is complex no matter what its prior is since $\alpha_d$ enters the gamma function, and has the form
+\begin{align*}
+p(\alpha_d|...) \propto p(\alpha_d)\frac{\left(\prod_{i=1}^{n_d}d_i + \beta_d^{n_d}\right)^{\alpha_d}}{\Gamma(\alpha_d)^{n_d}}.
+\end{align*}
+This density can be drawn from using rejection sampling or an independence Metropolis step, e.g. ARS or ARMS.
 \bibliographystyle{apalike} 
 \bibliography{../paper/btc}
 
