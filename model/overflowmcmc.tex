@@ -166,11 +166,11 @@ p(\sigma^2,\omega|...) \propto (\sigma^2)^{-(a_\sigma+v)/2-1}\exp\left[-\frac{b_
 \end{align*}
 So we draw $\sigma^2$ and $\omega$ in two separate Gibbs steps:
 \begin{enumerate}
-\item Draw $\omega \sim G\left(\frac{v + 1}{2}, \frac{1}{\sigma^2} + \frac{1}{v s^2}\right)$ and form
+\item Draw $\omega \sim G\left(\frac{v + 1}{2}, \frac{1}{\sigma^2} + \frac{1}{v s^2}\right)$ and form\footnote{The inconsistency in notation between the definition of $a_\sigma$ and $b_\sigma$ is a consequence of matching notation to the R code supplied for implementing this MCMC algorithm.}
 \begin{align*}
-a_\sigma = n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k &&\mbox{  and  }&& b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2/2;
+a_\sigma = \frac{n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k + v}{2} &&\mbox{  and  }&& b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2;
 \end{align*}
-\item Draw $\sigma^2 \sim  IG\left(\frac{a_\sigma + v}{2}, b_\sigma + \omega\right)$.
+\item Draw $\sigma^2 \sim  IG\left(a_\sigma, b_\sigma/2 + \omega\right)$.
 \end{enumerate}
 
 \subsection{Block arrival times --- $\tau_k$}
@@ -215,10 +215,16 @@ p(\bm{o}_{1:n_b}|...)\propto \prod_{k=1}^{n_b} \prod_{i=1}^{M_k - M_{k-1}}o_{ik}
 \end{align*}
 So the $\bm{d}$ step to draw from $p(\bm{d}|...)$ is as follows: Let $\bm{1}_n$ denote an $n$-vector of ones. For $k=1,2,\dots,n_b$
 \begin{enumerate}
-\item Draw $\bm{o}_{k} \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1}})1\big(d_{1k} > 1[N_{k-1} - M_{k-1} > 0][\bar{D}_{k-1} - D_{k-1}]/D_{k}\big)$.
+\item If $N_k = M_k$ draw $\bm{o}_{k} \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1}})$.
+
+  Otherwise draw $\bm{o}_{k} \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1}})1(d_{1k} > [\bar{D}_{k-1} - D_{k-1}]/D_k)$.
 \item Set $\bm{d}_k = \bm{o}_kD_k$.
 \end{enumerate}
-When the dirichlet distribution is truncated the draw can be accomplished by rejection sampling, though other methods are available. [FILL IN WHICHEVER METHOD I END UP USING --- PROBABLY AUGMENTATION LIKE MY BLOG POST]
+To draw from the truncated Dirichlet distribution above, first note that by the properties of the Dirhichlet the marginal distribution of $o_{1k}$ is $Beta(\alpha_d, \alpha_d(M_k - M_{k-1} - 1))$ and conditional on $o_{1k}$, $\bm{o}_{-1,k}/(1 - o_{1k}) \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1} - 1})$. Then $o_{1k}$ can be drawn from the truncated Beta distribution using the inverse cdf method, resulting in the following two step algorithm to draw from the desired truncated Dirichlet distribution:
+\begin{enumerate}
+\item Draw $u \sim U(0,1)$ and set $o_{1k} = F^{-1}(u*[1 - F((\bar{D}_{k-1} - D_{k-1})/D_k)])$ where $F$ is the cdf of the $Beta(\alpha_d, \alpha_d(M_k - M_{k-1} - 1))$ distribution.
+\item Draw $\tilde{\bm{o}}_{2:(M_k - M_{k-1})}\sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1} - 1})$ and set $o_{ik} = \tilde{o}_i$ for $i = 2,3,\dots,M_k - M_{k-1}$.
+\end{enumerate}
 
 To draw the $N_k$'s first note that their support is restricted by the value of the $M_k$'s. Specifically for $k=1,2,\dots,n_b$ and $N_0 = 0$ we have $M_k \le N_k \le N_{k+1}$. Second, when 
 \begin{align*}
@@ -228,7 +234,7 @@ we know that $N_k = M_k$ because otherwise transaction $M_k + 1$ would be in blo
 \begin{align*}
 p(N_k|N_{0:(k-1)}, \dots) \propto \frac{\lambda_k^{N_k - N_{k-1}}e^{-\lambda_k}}{(N_k - N_{k-1})!}1(N_k \ge M_k)1(N_k \ge N_{k-1}).
 \end{align*}
-In other words, $\eta_k = N_k - N_{k-1}$ has a truncated Poisson distribution where the support is restricted to $\{M_k - N_{k-1}, M_k - N_{k-1} + 1, \dots \}$. [PUT INSTRUCTIONS FOR HOW TO DRAW FROM THE TRUNCATED POISSON HERE] So we can draw from $p(\bm{N}_{1:n_b}|\dots)$ as follows: For $k=1,2,\dots,n_b$
+In other words, $\eta_k = N_k - N_{k-1}$ has a truncated Poisson distribution where the support is restricted to $\{M_k - N_{k-1}, M_k - N_{k-1} + 1, \dots \}$. We can easily simulate from this distribution using the inverse cdf method. So we can draw from $p(\bm{N}_{1:n_b}|\dots)$ as follows: For $k=1,2,\dots,n_b$
 \begin{enumerate}
 \item If $\sum_{i=1}^{M_k - M_{k-1} + 1} d_{M_k + i} \le \bar{D}_k$ set $N_k = M_k$.
 
