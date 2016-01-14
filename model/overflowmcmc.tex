@@ -42,12 +42,12 @@ with mean $[\Psi(\tau_i + \delta_i) - \Psi(\tau_i)]/\phi$. Then for block $k=1,2
 \lambda_k|\delta_{1:n_{b}} &\stackrel{ind}{\sim} G(\psi_k, \phi).
 \end{align*}
 
-In order for the gamma process to be well defined we require $\phi>0$ and $\Psi(\tau)$ to be nondecreasing and right continuous with $\Psi(0)=0$. An easy way to achieve this is to define $\Psi(\tau) = \int_0^\tau\psi(t)dt$ where $\psi(t)$ is continuous and nonnegative. While $\psi(t)$ can be thought of as the intensity of the Gamma process it is also intimately related to the intensity of the Poission process. The mean of $N(\tau + \delta) - N(\tau)$ is 
+In order for the gamma process to be well defined we require $\phi>0$ and $\Psi(\tau)$ to be nondecreasing and right continuous with $\Psi(0)=0$. An easy way to achieve this is to define $\Psi(\tau) = \int_0^\tau\psi(t)dt$ where $\psi(t)$ is continuous and nonnegative. While $\psi(t)$ can be thought of as the intensity of the gamma process it is also intimately related to the intensity of the Poission process. The mean of $N(\tau + \delta) - N(\tau)$ is 
 \begin{align*}
 E[N(\tau + \delta) - N(\tau)] &= E\{E[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\} = E[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
  &= [\Psi(\tau + \delta) - \Psi(\delta)]/\phi = \int_{\tau}^{\tau + \delta}\psi(t)dt/\phi.
 \end{align*}
-In this way, $\psi(t)/\phi$ can be seen as the expected intensity function of the $N(\tau)$ process. The Gamma-Poisson structure also allows for a more flexible model on $N(\tau)$ by allowing for overdispersion. In a Poisson model the mean and variance are the same, but in this case they are proportional:
+In this way, $\psi(t)/\phi$ can be seen as the expected intensity function of the $N(\tau)$ process. The gamma-Poisson structure also allows for a more flexible model on $N(\tau)$ by allowing for overdispersion. In a Poisson model the mean and variance are the same, but in this case they are proportional:
 \begin{align*}
 V[N(\tau + \delta) - N(\tau)] &= E\{V[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\} + V\{E[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\}\\
 &= E[\Lambda(\tau + \delta) - \Lambda(\tau)] + V[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
@@ -176,9 +176,9 @@ a_\sigma = \frac{n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k + v}{2} &&\mbox{  and  }&& 
 \subsection{Block arrival times --- $\tau_k$}
 The full conditional distribution of the block arrival times is more complicated:
 \begin{align*}
-p(\bm{\tau}_{1:n_{b}}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\frac{\phi^{\Psi(\tau_k) - \Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1}) - 1}
+p(\bm{\tau}_{1:n_{b}}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\prod_{k=1}^{n_b}\frac{\phi^{\Psi(\tau_k) - \Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1}) - 1}
 \end{align*}
-where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the Gamma function. Some ideas for handlilng this step:
+where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the gamma function. Some ideas for handling this step:
 \begin{enumerate}
 \item Draw each $\tau_k$ condtional on all the others using random walk Metropolis steps for $k=1,\dots,n_{b}$.
 \item Approximate the density of $\tau_k$ sufficiently well and use independent Metropolis steps for $k=1,\dots,n_{b}$.
@@ -192,7 +192,7 @@ The full conditional density of $\phi$ is
 \begin{align*}
 p(\phi|...) \propto \prod_{k=1}^{n_{b}}\phi^{\psi_k}e^{\lambda_k\phi}p(\phi) \propto \phi^{\sum_{k=1}^{n_{b}}\psi_k}e^{\phi\sum_{k=1}^{n_{b}}\lambda_k}p(\phi).
 \end{align*}
-With $\phi \sim G(a_\phi, b_\phi)$ in the prior, this is a Gamma density so the step is simple:
+With $\phi \sim G(a_\phi, b_\phi)$ in the prior, this is a gamma density so the step is simple:
 \begin{enumerate}
 \item Draw $\phi \sim G\left(a_\phi + \sum_{k=1}^{n_{b}}\psi_k, b_{\phi} + \sum_{k=1}^{n_{b}}\lambda_k \right)$.
 \end{enumerate}
