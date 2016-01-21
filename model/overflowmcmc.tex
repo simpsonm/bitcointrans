@@ -176,7 +176,10 @@ a_\sigma = \frac{n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k + v}{2} &&\mbox{  and  }&& 
 \subsection{Block arrival times --- $\tau_k$}
 The full conditional distribution of the block arrival times is more complicated:
 \begin{align*}
-p(\bm{\tau}_{1:n_{b}}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\prod_{k=1}^{n_b}\frac{\phi^{\Psi(\tau_k) - \Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1}) - 1}
+p(\bm{\tau}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\\
+&\times \prod_{k=1}^{n_b}\frac{\phi^{\Psi(\tau_k) - \Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1}) - 1}1(0\le \tau_1 \le \tau_2 \le \hdots \le \tau_{n_b})\\
+\propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right] \phi^{\Psi(\tau_{n_b})}\\
+&\times \prod_{k=1}^{n_b}\frac{\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}1(0\le \tau_1 \le \tau_2 \le \hdots \le \tau_{n_b})\\
 \end{align*}
 where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the gamma function. Some ideas for handling this step:
 \begin{enumerate}
@@ -186,6 +189,37 @@ where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gam
 \item Use adaptive rejection sampling (ARS) to draw from the density of $\tau_k$.
 \item Use ARMS --- ARS except with a Metropolis correction for densities which are not log concave (look it up).
 \end{enumerate}
+The full conditional distribution of $\tau_k$ for $k=1,2,\dots,n_{b}-1$ is
+\begin{align*}
+p(\tau_k|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{i=1}^{\tilde{n}_k + 1}(\tilde{t}_{ik} - \tau_k)^2\right] \frac{\left(\frac{\lambda_k}{\lambda_{k+1}}\right)^{\Psi(\tau_k)}}{\Gamma\left[\Psi(\tau_{k+1}) - \Psi(\tau_k)\right]\Gamma\left[\Psi(\tau_{k}) - \Psi(\tau_{k-1})\right]}1(\tau_{k-1}\le \tau_k \le \tau_{k+1})
+\end{align*}
+and the full conditional of $\tau_{n_b}$ is
+\begin{align*}
+p(\tau_{n_b}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{i=1}^{\tilde{n}_{n_b} + 1}(\tilde{t}_{in_b} - \tau_{n_b})^2\right] \frac{\lambda_{n_b}^{\Psi(\tau_{n_b})}}{\Gamma\left[\Psi(\tau_{n_b}) - \Psi(\tau_{n_b-1})\right]}1(\tau_{n_b-1}\le \tau_{n_b}).
+\end{align*}
+Define the sets $A_k = [\tau_{k-1}, \tau_{k+1}$ for $k = 1, 2, \dots, n_b-1$ and $A_{n_b} = [\tau_{n_b -1}, \infty)$. Let $l_k$ and $u_k$ denote the lower and upper bounds of $A_k$ respectivfely. Then we will use a random walk Metropolis algorithm on each coordinate with a truncated normal proposal distribution $N_{A_k}(\tau_k, h_k^2)$. Then the acceptance rate of the Metropolis step for $\tau_k$ is
+\begin{align*}
+R_k = \frac{p(\tau_k^{(prop)}|\dots)\left[\Phi\left(\frac{u_k - \tau_k^{(old)}}{h_k}\right) - \Phi\left(\frac{l_k - \tau_k^{(old)}}{h_k}\right)\right]}{p(\tau_k^{(old)}|\dots)\left[\Phi\left(\frac{u_k - \tau_k^{(prop)}}{h_k}\right) - \Phi\left(\frac{l_k - \tau_k^{(prop)}}{h_k}\right)\right]}.
+\end{align*}
+where $\tau_k^{(old)}$ is the previous value in the chain and $\tau_k^{(prop)}$ is the proposed value. So the $\tau_k$ step is as follows:
+\begin{enumerate}
+\item Draw $\tau_k^{(prop)} \sim N_{A_k}(\tau_k^{(t)},h_k^2)$ and compute $R_k$.
+\item Set $\tau_k^{(t+1)} = \tau_k^{(prop)}$ with probability $\min(R_k, 1)$ and $\tau_k^{(t+1)} = \tau_k^{(t)}$ otherwise.
+\end{enumerate}
+For each $k$ the scale parameter $h_k$ must be chosen by the user, which is practically impossible with a large number of blocks in the analysis. So we automatically tune $h_k$ during the the burn in period as follows [CITATION]:
+\begin{enumerate}
+\item Run the algorithm above for $H$ iterations.
+\item For each $k$, compute the observed acceptance rate of the last $H$ iterations: $r_k\#(\tau_k^{(t)} = \tau_k^{(t-1)})/H$.
+\item If $r_k$ is larger than some target range $[r_l^*, r_h^*]$ update $\log h_k = \log h_k + c$; if lower update $\log h_k = \log h_k - c$.
+\end{enumerate}
+In certain simple cases the optimal acceptance rate for a one-dimensional target has been computed to be approximately $0.44$, so we use the range $[0.4, 0.45]$ as a rough guideline [CITATION]. In order to ensure that the Markov chain converges to the target posterior of distribution this adaptive process must asymptotically stop in some sense --- restricting the process to the burn in is a sufficient condition. In practice as the chain converges in can help to start $H$ small and $c$ large so that the $h_k$'s quickly move to reasonable values, then over time increase $H$ and decrease $c$ for more precise fine tuning. We start with $H=50$ and $c=0.1$
+
+The previous algorithm for the $\tau_k$ steps works but will suffer from slow convergence because the $\tau_k$'s are being updated separately instead of in a block. It is helpful for getting a crude estimate of $\Sigma$, the posterior covariance matrix for $\tau_{1:n_b}$. Given this estimate $\hat{\Sigma}$, we can implement a blockwise Metropolis update for $\tau_{1:n_b}$, which will substantially decrease the number of draws required to adequately characterize the posterior distribution after burn in. First we transform to $\delta_{1:n_b}$ where $\delta_k = \tau_k - \tau_{k-1}$, then to $\zeta_k = \log\delta_k$ to obtain
+\begin{align*}
+p(\zeta_{1:n_b}|...) &\propto  \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \sum_{l=1}^ke^{\zeta_l}\right)^2 - \frac{1}{10}\sum_{k=1}^{n_{b}}e^{\zeta_k} + \sum_{k}^{n_b}\zeta_k\right]\\
+&\times \phi^{\Psi(\sum_{k=1}^{n_b}e^{\zeta_k})}\prod_{k=1}^{n_b}\frac{\lambda_k^{\Psi(\sum_{l=1}^{k}e^{\zeta_l})-\Psi(\sum_{l=1}^{k-1}e^{\zeta_l})}}{\Gamma\left[\Psi(\sum_{l=1}^ke^{\zeta_l}) - \Psi(\sum_{l=1}^{k-1}e^{\zeta_l})\right]}.
+\end{align*}
+Then the Metropolis proposal is drawn from a $N(\zeta_{1:n_b}^{(t)}, h^2\hat{\Sigma})$ distribution where $\zeta_{1:n_b}^{(t)}$ is the previous value of $\zeta_{1:n_b}$ in the chain, $h$ is a user chosen scale parameter, and $\hat{\Sigma}$ is a crude estimate of the posterior covariance matrix for $\zeta_{1:n_b}$ obtained using the single dimensional random walk Metropolis algorithm used above. Then $h$ can be tuned just like the $h_k$'s with a target rate of about $0.24$ that is more appropriate for the high dimensional case, though again this rate was derived for simpler models than our own [CITATION]. If the correlation structure of the $\zeta$'s depends heavily on the values of the other parameters in the model then this algorithm may reject too frequently no matter the value of $h$ because $\hat{\Sigma}$ is a crude estimate of the {\it marginal} posterior for $\zeta_{1:n_b}$. In that case we can simply revert to the original one dimensional random walk Metropolis algorithm.
 
 \subsection{Transaction process dispersion --- $\phi$}
 The full conditional density of $\phi$ is
@@ -202,7 +236,7 @@ The full conditional posterior of $\bm{\beta}$ is closely connected to the funct
 \begin{align*}
 p(\bm{\beta}|\dots) \propto p(\bm{\beta})\prod_{k=1}^{n_b}\frac{\phi^{\psi_k(\bm{\beta})}\lambda_k^{\psi_k(\bm{\beta}) - 1}}{\Gamma[\psi_k(\bm{\beta})]}
 \end{align*}
-where in the prior $\bm{\beta} \sim p(\bm{\beta})$ independent of the other parameters. This density is complex and nonstandard since $\psi_k(\bm{\beta})$ enters the gamma function. A Metropolis step is likely warranted here as well.
+where in the prior $\bm{\beta} \sim p(\bm{\beta})$ independent of the other parameters. This density is complex and nonstandard since $\psi_k(\bm{\beta})$ enters the gamma function. In the case of $\bm{\beta} = (beta_1, \beta_2)'$ and $\bm{z}(t) = (1, t)'$ we use separate random walk Metropolis steps with a normal proposal and separately tuned standard deviations --- analogous to the algorithm used for the $\tau_k$'s above.
 
 \subsection{Transaction arrival times and sizes in MB --- $N(\tau_k)$ and $D_k$}
 First consider transaction sizes, $\bm{d}=(d_1,d_2,\dots,d_{n_d})'$. Let $\bm{d}_k$ denote the sizes of the $M_k - M_{k-1}$ transactions that were stored in block $k$ so that $\bm{d} = (\bm{d}_1',\dots,\bm{d}_{n_{b}}')'$. The full conditional distribution of the $\bm{d}_k$'s is
@@ -263,7 +297,7 @@ p(\alpha_d|...) &\propto p(\alpha_d)\frac{\left(\beta_d^{n_d}\prod_{i=1}^{n_d}d_
 \intertext{which in the case of a gamma prior on $\alpha_d$ is}
 p(\alpha_d|...) &\propto \alpha_d^{a_\alpha - 1}\frac{\left(e^{-b_\alpha}\beta_d^{n_d}\prod_{i=1}^{n_d}d_i\right)^{\alpha_d}}{\Gamma(\alpha_d)^{n_d}}.
 \end{align*}
-This density can be drawn from using rejection sampling or an independence Metropolis step, e.g. ARS or ARMS.
+This density is log concave so we will use adaptive rejection sampling to draw from it [CITATION].
 \bibliographystyle{apalike} 
 \bibliography{../paper/btc}
 
