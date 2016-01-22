@@ -139,3 +139,38 @@ summary(weightedreg1)
 summary(weightedreg2)
 summary(weightedreg3)
 summary(weightedreg4)
+
+
+### added for checking basic distributional assumptions about transaction sizes
+### upshot: gamma distribution seems reasonable (variance of trans size is linear in mean)
+weights <- blocks$transactions_count
+sizes <- blocks$size
+means <- weights/sizes
+heights <- blocks$height
+maxheight <- max(heights)
+
+sequence <- seq(1,maxheight,by=500)
+weightedsummary <- NULL
+for(i in 1:length(sequence)){
+  tempsizes <- means[heights >= sequence[i] & heights < sequence[i] + 500]
+  tempweights <- weights[heights >= sequence[i] & heights < sequence[i] + 500]
+  tempmean <- wtd.mean(tempsizes, tempweights, TRUE)
+  tempvar <- wtd.var(tempsizes, tempweights, TRUE)
+  tempsd <- sqrt(tempvar)
+  totalweight <- sum(tempweights)
+  weightedsummary <- rbind(weightedsummary,c(i,tempmean,tempvar,tempsd,totalweight))
+}
+colnames(weightedsummary) <- c("id", "mean", "var", "sd", "wt")
+weightedsummary <- data.frame(weightedsummary)
+
+plot(weightedsummary$mean, weightedsummary$var)
+
+weightedreg1 <- lm(var ~ mean, data = weightedsummary, weights = wt)
+weightedreg2 <- lm(var ~ mean + I(mean^2), data = weightedsummary, weights = wt)
+weightedreg3 <- lm(var ~ mean + I(mean^2) + I(mean^3), data = weightedsummary, weights = wt)
+weightedreg4 <- lm(var ~ mean + I(mean^2) + I(mean^3) + I(mean^4), data = weightedsummary, weights = wt)
+
+summary(weightedreg1)
+summary(weightedreg2)
+summary(weightedreg3)
+summary(weightedreg4)
