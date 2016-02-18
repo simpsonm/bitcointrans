@@ -32,44 +32,55 @@ where
 \begin{align*}
 \Lambda(\tau) = \int_0^\tau \lambda(u)du.
 \end{align*}
-Suppose the intensity function is a gamma process with shape function $\Psi(\tau)$ and rate parameter $\phi$. In other words
+Suppose the intensity function is a gamma process with shape function $\Psi(\tau)$ and rate parameter $\theta$. In other words
 \begin{align*}
-\Lambda(\tau_i + \delta_i) - \Lambda(\tau_i) \stackrel{ind}{\sim} G(\Psi(\tau_i + \delta_i) - \Psi(\tau_i), \phi)
+\Lambda(\tau_i + \delta_i) - \Lambda(\tau_i) \stackrel{ind}{\sim} G(\Psi(\tau_i + \delta_i) - \Psi(\tau_i), \theta)
 \end{align*}
-with mean $[\Psi(\tau_i + \delta_i) - \Psi(\tau_i)]/\phi$. Then for block $k=1,2,\dots,n_{b}$ define $\lambda_k = \Lambda(\tau_k) - \Lambda(\tau_{k-1})$, $\eta_k = N(\tau_k) - N(\tau_{k-1})$, and $\psi_k = \Psi(\tau_k) - \Psi(\tau_{k-1})$. Then assume
+with mean $[\Psi(\tau_i + \delta_i) - \Psi(\tau_i)]/\theta$. Then for block $k=1,2,\dots,n_{b}$ define $\lambda_k = \Lambda(\tau_k) - \Lambda(\tau_{k-1})$, $\eta_k = N(\tau_k) - N(\tau_{k-1})$, and $\psi_k = \Psi(\tau_k) - \Psi(\tau_{k-1})$. Then we assume
 \begin{align*}
 \eta_k | \lambda_{1:n_{b}} &\stackrel{ind}{\sim} Poi(\lambda_k)\\
-\lambda_k|\delta_{1:n_{b}} &\stackrel{ind}{\sim} G(\psi_k, \phi).
+\lambda_k|\delta_{1:n_{b}} &\stackrel{ind}{\sim} G(\psi_k, \theta).
 \end{align*}
 
-In order for the gamma process to be well defined we require $\phi>0$ and $\Psi(\tau)$ to be nondecreasing and right continuous with $\Psi(0)=0$. An easy way to achieve this is to define $\Psi(\tau) = \int_0^\tau\psi(t)dt$ where $\psi(t)$ is continuous and nonnegative. While $\psi(t)$ can be thought of as the intensity of the gamma process it is also intimately related to the intensity of the Poission process. The mean of $N(\tau + \delta) - N(\tau)$ is 
+In order for the gamma process to be well defined we require $\theta>0$ and $\Psi(\tau)$ to be nondecreasing and right continuous with $\Psi(0)=0$. An easy way to achieve this is to define $\Psi(\tau) = \int_0^\tau\psi(t)dt$ where $\psi(t)$ is continuous and nonnegative. While $\psi(t)$ can be thought of as the intensity of the gamma process it is also intimately related to the intensity of the Poission process. The mean of $N(\tau + \delta) - N(\tau)$ is 
 \begin{align*}
 E[N(\tau + \delta) - N(\tau)] &= E\{E[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\} = E[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
- &= [\Psi(\tau + \delta) - \Psi(\delta)]/\phi = \int_{\tau}^{\tau + \delta}\psi(t)dt/\phi.
+ &= [\Psi(\tau + \delta) - \Psi(\delta)]/\theta = \int_{\tau}^{\tau + \delta}\psi(t)dt/\theta.
 \end{align*}
-In this way, $\psi(t)/\phi$ can be seen as the expected intensity function of the $N(\tau)$ process. The gamma-Poisson structure also allows for a more flexible model on $N(\tau)$ by allowing for overdispersion. In a Poisson model the mean and variance are the same, but in this case they are proportional:
+In this way, $\psi(t)/\theta$ can be seen as the expected intensity function of the $N(\tau)$ process. The gamma-Poisson structure also allows for a more flexible model on $N(\tau)$ by allowing for overdispersion. In a Poisson model the mean and variance are the same, but in this case they are proportional:
 \begin{align*}
 V[N(\tau + \delta) - N(\tau)] &= E\{V[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\} + V\{E[N(\tau + \delta) - N(\tau)|\Lambda(\tau + \delta) - \Lambda(\tau)]\}\\
 &= E[\Lambda(\tau + \delta) - \Lambda(\tau)] + V[\Lambda(\tau + \delta) - \Lambda(\tau)]\\
-&= [\Psi(\tau + \delta) - \Psi(\tau)](1/\phi + 1/\phi^2) = \frac{\phi + 1}{\phi}E[N(\tau + \delta) - N(\tau)].
+&= [\Psi(\tau + \delta) - \Psi(\tau)](1/\theta + 1/\theta^2) = \frac{\theta + 1}{\theta}E[N(\tau + \delta) - N(\tau)].
 \end{align*}
-This allows for overdispersion but not underdispersion since $(\phi + 1)/\phi\in[1,\infty)$ for $\phi\ge 0$.
+This allows for overdispersion but not underdispersion since $(\theta + 1)/\theta\in[1,\infty)$ for $\theta\ge 0$.
 
-To complete this portion of the model we need to specify $\psi(t)$. A flexible structure that captures many modeling choices is $\psi(t) = \exp(\bm{z}(t)'\bm{\beta})$ where $\bm{z}(t)' = (z_1(t),\dots,z_p(t))$ is a vector of time-varying covariates continuously differentiable in time and $\bm{\beta}'=(\beta_1,\dots,\beta_p)$ is a vector of regression coefficients, for example $\psi(t) = \exp(\beta_1 + t\beta_2)$ in order to capture a simple trend. In that case we have
+We can represent this part of the model more compactly by integrating out the $\lambda_k$'s. Define $\phi = \theta/(1 + \theta)$. Then $\eta_k$ has a negative binomial distribution:
 \begin{align*}
-\Psi(\tau+\delta) - \Psi(\tau) &= \int_{\tau}^{\tau + \delta} e^{\bm{z}(t)'\bm{\beta}}dt = \int_\tau^{\tau + \delta} e^{\beta_1 + t\beta_2}dt = \frac{e^{\beta_1 + \tau\beta_2}}{\beta_2}\left(e^{\delta\beta_2} - 1\right)
-\intertext{and thus}
-\psi_k &= \frac{e^{\beta_1 + \tau_{k-1}\beta_2}}{\beta_2}\left(e^{\delta_k\beta_2} - 1\right).
+\eta_k|\delta_{1:n_{b}} &\stackrel{ind}{\sim} NB(\psi_k, 1-\phi)
 \end{align*}
+with pmf
+\begin{align*}
+P(\eta_k = \eta|\delta_{1:n_{b}}) \frac{\Gamma(\psi_k + \eta)}{\Gamma(\eta + 1)}\phi^{\psi_k}(1-\phi)^{\eta}
+\end{align*}
+for $\eta=0,1,\dots$ We will use this representation of the model both for simplified exposition and later for cheaper MCMC.
+
+To complete this portion of the model we need to specify $\psi(t)$. A flexible structure that captures many modeling choices is $\psi(t) = \exp(\bm{z}(t)'\bm{\gamma})$ where $\bm{z}(t)' = (z_1(t),\dots,z_p(t))$ is a vector of time-varying covariates continuously differentiable in time and $\bm{\gamma}'=(\gamma_1,\dots,\gamma_p)$ is a vector of regression coefficients, for example $\psi(t) = \exp(\gamma_1 + t\gamma_2)$ in order to capture a simple trend. In that case we have
+\begin{align*}
+\Psi(\tau+\delta) - \Psi(\tau) &= \int_{\tau}^{\tau + \delta} e^{\bm{z}(t)'\bm{\gamma}}dt = \int_\tau^{\tau + \delta} e^{\gamma_1 + t\gamma_2}dt = \frac{e^{\gamma_1 + \tau\gamma_2}}{\gamma_2}\left(e^{\delta\gamma_2} - 1\right)
+\intertext{and thus}
+\psi_k &= \frac{e^{\gamma_1 + \tau_{k-1}\gamma_2}}{\gamma_2}\left(e^{\delta_k\gamma_2} - 1\right).
+\end{align*}
+
 \subsection{Transaction data}
 Let $i=1,2,\dots,n_d \equiv N_{n_b}$ index transactions and $d_i$ denote the amount of data for transaction $i$ measured in MBs. Then we assume that for $i=1,2,\dots,n_d$
 \begin{align*}
-d_i \stackrel{iid}{\sim} G(\alpha_d,\beta_d)
+d_i \stackrel{iid}{\sim} G(\alpha,\beta)
 \end{align*}
-with mean $\alpha_d/\beta_d$. Along with the Poisson process for $N(\tau)$ this implies that the amount of transaction data that has arrived by time $\tau$, $D(\tau)$, is a compound non-homogenous Poisson process conditional on $\Lambda(\tau)$.
+with mean $\alpha/\beta$. Along with the Poisson process for $N(\tau)$ this implies that the amount of transaction data that has arrived by time $\tau$, $D(\tau)$, is a compound non-homogenous Poisson process conditional on $\Lambda(\tau)$.
 
 \subsection{Overflow and observations of $M_k$ and $D_k$}
-Each block has an upper limit for the amount of transaction data it can hold defined by the block miner. Denote this upper limit by $\bar{D}_k$ --- because different miners use different limits and the same miner uses different limits at different times, each block has its own upper limit. Then the number of transactions in blocks $1,2,\dots,k$ combined, $M_k$, could potentially be less than the number of transactions that have arrived by the time the $k$'th block arrives, $N_k$. Specifically:
+Each block has an upper limit for the amount of transaction data it can hold defined by the block miner. Denote this upper limit by $\bar{D}_k$ --- because different miners use different limits and the same miner uses different limits at different times, each block has its own upper limit. Then the number of transactions in blocks $1,2,\dots,k$ combined could potentially be less than the number of transactions that have arrived by the time the $k$'th block arrives. Let $M_k$ denote the number of transactions total in blocks $1,2,\dots,k$. Then possibly $M_k \le N_k$. Specifically:
 \begin{align*}
 M_k &= \max\left\{m\in\left\{M_{k-1}, M_{k-1} + 1, \dots, N_k\right\}: \sum_{i = M_{k-1} + 1}^m d_i \le \bar{D}_k\right\}
 \end{align*}
@@ -80,7 +91,7 @@ D_k &= \sum_{i = M_{k-1} + 1}^{M_k} d_i
 with the convention that empty summations are defined as zero, i.e. $\sum_{i=5}^4d_i \equiv 0$. 
 
 \section{Priors}
-The model has the following unknown parameters: $\sigma^2$, $\phi$, $\beta$, $\alpha_d$, $\beta_d$, and $\bar{D}_k$ for $k=1,2,\dots,n_b$. We will suppose that these parameters are mutually independent in the prior, i.e.
+The model has the following unknown parameters: $\sigma^2$, $\phi$, $\beta$, $\alpha$, $\beta$, and $\bar{D}_k$ for $k=1,2,\dots,n_b$. We will suppose that these parameters are mutually independent in the prior, i.e.
 \begin{align*}
 p(\sigma^2,\phi,\beta,\alpha_d,\beta_d,\bar{D}_1,\dots,\bar{D}_{n_{b}}) = p(\sigma^2)p(\phi)p(\beta)p(\alpha_d)p(\beta_d)p(\bar{D}_1)\hdots p(\bar{D}_{n_{b}}).
 \end{align*}
@@ -93,35 +104,35 @@ The expected size of the measurement error on $t_k$ is controlled by $\sigma^2$ 
 This yields a $t_{v}(0,s^2)1(\sigma>0)$ prior on $\sigma$ where $s^2$ is a scale parameter and $v$ is a degrees of freedom parameter. We use $v=1$ so that the prior on $\sigma$ has a half-Cauchy distribution with median $s$. To gain some intuition in order to set an appropriate value for $s$, suppose that the measurement error distribution was not truncated. Then we would expect $68\%$ of observed block arrival times to be within $\sigma$ of the actual arrival time. A reasonable a priori guess for $\sigma$ is then one minute, so we set $s=1$ so that the median value of $\sigma$ in its prior is one. This prior is only weakly informative --- the right tail is gently sloped so that the data will quickly overwhelm the prior as observations pile up [CITE GELMAN VARIANCE PAPER]. 
 
 \subsection{Prior on $\phi$}
-The conditionally conjugate prior for $\phi$ is a gamma distribution, so we will suppose that $\phi \sim G(a_{\phi}, b_{\phi})$. To choose $a_\phi$ and $b_\phi$ recall that $\phi$ is a dispersion parameter:
+The conditionally conjugate prior for $\phi$ is a beta distribution, so we will suppose that $\phi \sim B(a_{\phi}, b_{\phi})$. To choose $a_\phi$ and $b_\phi$ recall that $\phi$ is related to $\theta$, a dispersion parameter:
 \begin{align*}
-V[N(\tau)|\phi,\Psi(\tau)] = \frac{\phi + 1}{\phi}E[N(\tau)|\phi,\Psi(\tau)] = \frac{\phi + 1}{\phi}\frac{\Psi(\tau)}{\phi}.
+V[N(\tau)|\theta,\Psi(\tau)] = \frac{\theta + 1}{\theta}E[N(\tau)|\theta,\Psi(\tau)] = \frac{1}{\phi}E[N(\tau)|\theta,\Psi(\tau)] = \frac{1}{\phi}\Psi(\tau)\frac{1-\phi}{\phi}.
 \end{align*}
-Setting $\phi = 1$ means that the variance of $N(\tau)$ is twice its mean. Absent strong prior information about $\phi$, we will center our prior on $2$ with a high level of uncertainty. The mean of the gamma distribution is $a_\phi/b_\phi$ with variance $a_\phi/b_\phi^2$, so we will set $b_\phi = 1/100$ to reflect a high degree of uncertainty, and $a_\phi = 1/50$ so that $a_\phi/b_\phi = 2$.
+Setting $\phi = 0.5$ means that the variance of $N(\tau)$ is twice its mean. Absent strong prior information about $\phi$, we will center our prior on $2/3$ with a high level of uncertainty. The mean of the beta distribution is $a_\phi/(a_\phi + b_\phi)$ with variance $a_\phi b_\phi/[(a_\phi + b_\phi + 1)(a_\phi + b_\phi)^2]$, so we will set $a_\phi = 0.2$ and $b_\phi = 0.1$ to reflect a high degree of uncertainty.
 
-\subsection{Prior on $\bm{\beta}$}
-As we will see in the next section, there is no convenient conditionally conjugate form for $\bm{\beta}$, so there is no computational trade-off associated with choosing a prior which more accurately reflects prior knowledge. We will consider $\bm{\beta}$ much like a regression parameter and set
+\subsection{Prior on $\bm{\gamma}$}
+As we will see in the next section, there is no convenient conditionally conjugate form for $\bm{\gamma}$, so there is no computational trade-off associated with choosing a prior which more accurately reflects prior knowledge. We will consider $\bm{\gamma}$ much like a regression parameter and set
 \begin{align*}
-\bm{\beta} \sim N(\bm{b}_\beta, \bm{S}_\beta)
+\bm{\beta} \sim N(\bm{g}_\gamma, \bm{S}_\gamma)
 \end{align*}
-where $\bm{b}_\beta$ is a mean vector and $\bm{S}_\beta$ is a covariance matrix. We will use a weakly informative prior with $\bm{b}_\beta = \bm{0}$ and $\bm{S}_\beta = s^2_\beta\bm{I}$ where $s_\beta = 100$.  [MAYBE SOMETHING WITH FATTER TAILS HERE? MAYBE NOTE THAT NONINFORMATIVE PRIOR IS NOT A GOOD IDEA SINCE WE WANT TO GUARANTEE POSTERIOR PROPRIETY --- SAME FOR $s_\beta$ TOO LARGE (VIVEK'S PAPER)]
+where $\bm{g}_\gamma$ is a mean vector and $\bm{S}_\gamma$ is a covariance matrix. We will use a weakly informative prior with $\bm{g}_\gamma = \bm{0}$ and $\bm{S}_\gamma = s^2_\gamma\bm{I}$ where $s_\gamma = 100$.  [MAYBE SOMETHING WITH FATTER TAILS HERE? MAYBE NOTE THAT NONINFORMATIVE PRIOR IS NOT A GOOD IDEA SINCE WE WANT TO GUARANTEE POSTERIOR PROPRIETY --- SAME FOR $s_\gamma$ TOO LARGE (VIVEK'S PAPER)]
 
-\subsection{Priors on $\alpha_d$ and $\beta_d$}
-The conditionally conjugate prior for $beta_d$ is a gamma while $\alpha_d$ has no convenient conditionally conjugate form. We will assume that $\beta_d \sim G(a_\beta, b_\beta)$ and $\alpha_d \sim G(a_\alpha, b_\alpha)$. In order to choose $a_\alpha$, $b_\alpha$, $a_\beta$, and $b_\beta$, consider that $E[d_i|\alpha_d,\beta_d] = \alpha_d/\beta_d$. But 
+\subsection{Priors on $\alpha$ and $\beta$}
+The conditionally conjugate prior for $beta$ is a gamma while $\alpha$ has no convenient conditionally conjugate form. We will assume that $\beta \sim G(a_\beta, b_\beta)$ and $\alpha \sim G(a_\alpha, b_\alpha)$. In order to choose $a_\alpha$, $b_\alpha$, $a_\beta$, and $b_\beta$, consider that $E[d_i|\alpha,\beta] = \alpha/\beta$. But 
 \begin{align*}
-E\left[\frac{\alpha_d}{\beta_d}\right] = E[\alpha_d]E\left[\frac{1}{\beta_d}\right] = \frac{a_\alpha}{b_\alpha}\frac{b_\beta}{a_\beta - 1}.
+E\left[\frac{\alpha}{\beta}\right] = E[\alpha]E\left[\frac{1}{\beta}\right] = \frac{a_\alpha}{b_\alpha}\frac{b_\beta}{a_\beta - 1}.
 \end{align*}
 Similarly
 \begin{align*}
-V\left[\frac{\alpha_d}{\beta_d}\right] = V[\alpha_d] + V\left[\frac{1}{\beta_d}\right] = \frac{a_\alpha}{b_\alpha^2} + \frac{b_\beta^2}{(a_\beta - 1)^2(a_\beta - 2)}.
+V\left[\frac{\alpha}{\beta}\right] = V[\alpha] + V\left[\frac{1}{\beta}\right] = \frac{a_\alpha}{b_\alpha^2} + \frac{b_\beta^2}{(a_\beta - 1)^2(a_\beta - 2)}.
 \end{align*}
-We will choose these parameters so that $E[\alpha_d/\beta_d] \approx 0.01$ MB and $V[\alpha_d/\beta_d]$ is large so that the prior is weakly informative. We will set $a_\beta = 2.1$ to ensure the variance calculated above exists. Then $a_\alpha = 0.1$, $b_\alpha = 1$, and $b_\beta = 1$ yields
+We will choose these parameters so that $E[\alpha/\beta] \approx 0.01$ MB and $V[\alpha/\beta]$ is large so that the prior is weakly informative. We will set $a_\beta = 2.1$ to ensure the variance calculated above exists. Then $a_\alpha = 0.1$, $b_\alpha = 1$, and $b_\beta = 1$ yields
 \begin{align*}
-E\left[\frac{\alpha_d}{\beta_d}\right] = \frac{1}{21} \approx 0.09; && V\left[\frac{\alpha_d}{\beta_d}\right] \approx 10.
+E\left[\frac{\alpha}{\beta}\right] = \frac{1}{21} \approx 0.09; && V\left[\frac{\alpha}{\beta}\right] \approx 10.
 \end{align*}
 
 \subsection{Priors on the $\bar{D}_k$'s}
-We will put a discrete prior on each of the $\bar{D}_k$'s. Theoretically a miner can put any upper limit she wants on a mined bitcoin, but in practice most miners use one of several possible values. We will use the set of values $\mathcal{D} = \{0.25, 0.35, 0.5, 0.75, 0.9, 0.95, 1\}$ [DOUBLE CHECK THESE --- IN PARTICULAR, ARE THERE OTHER COMMON VALUES? WHAT ABOUT THE ELGIUS MINING POOL'S CAPS?]. For each $\bar{D}_k$ we will use a discrete uniform prior on $\mathcal{D}$ so that $P(\bar{D}_k = j) = 1/7$ for all $j \in \mathcal{D}$.
+We will put a discrete prior on each of the $\bar{D}_k$'s. Theoretically a miner can put any upper limit she wants on a mined bitcoin, but in practice most miners use one of several possible values. We will use the set of values $\mathcal{D} = \{0.25, 0.35, 0.5, 0.75, 0.935, 0.95, 1\}$. For each $\bar{D}_k$ we will use a discrete uniform prior on $\mathcal{D}$ so that $P(\bar{D}_k = j) = 1/7$ for all $j \in \mathcal{D}$.
 
 [OPTIONS FOR MORE INTERESTING THINGS HERE: DIFFERENT PRIOR FOR EACH $k$ SO THAT LATER BLOCKS HAVE A HIGHER PROBABILITY OF HAVING A HIGHER CAP. THIS USES THE DATA TWICE, SO A BETTER OPTION MAY JUST BE MODELING THE PROBABILITIES ON $\mathcal{D}$ AS EVOLVING OVER TIME BASED ON SOME HIGHER LEVEL PARAMETERS]
 
@@ -177,11 +188,9 @@ a_\sigma = \frac{n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k + v}{2} &&\mbox{  and  }&& 
 The full conditional distribution of the block arrival times is more complicated:
 \begin{align*}
 p(\bm{\tau}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\\
-&\times \prod_{k=1}^{n_b}\frac{\phi^{\Psi(\tau_k) - \Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1}) - 1}1(0\le \tau_1 \le \tau_2 \le \hdots \le \tau_{n_b})\\
-\propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right] \phi^{\Psi(\tau_{n_b})}\\
-&\times \prod_{k=1}^{n_b}\frac{\lambda_k^{\Psi(\tau_k)-\Psi(\tau_{k-1})}}{\Gamma\left[\Psi(\tau_k) - \Psi(\tau_{k-1})\right]}1(0\le \tau_1 \le \tau_2 \le \hdots \le \tau_{n_b})\\
+&\times \prod_{k=1}^{n_b}\Gamma[\psi_k(\tau_{k}, \tau_{k-1}) + \eta_k]\phi^{\psi_k(\tau_k,\tau_{k-1})}1(0\le \tau_1 \le \tau_2 \le \hdots \le \tau_{n_b})
 \end{align*}
-where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the gamma function. Some ideas for handling this step:
+where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Here we make explicit that $\psi_k$ is a function of $\tau_k$ and $\tau_{k-1}$. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the gamma function. Some ideas for handling this step:
 \begin{enumerate}
 \item Draw each $\tau_k$ condtional on all the others using random walk Metropolis steps for $k=1,\dots,n_{b}$.
 \item Approximate the density of $\tau_k$ sufficiently well and use independent Metropolis steps for $k=1,\dots,n_{b}$.
@@ -189,91 +198,114 @@ where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gam
 \item Use adaptive rejection sampling (ARS) to draw from the density of $\tau_k$.
 \item Use ARMS --- ARS except with a Metropolis correction for densities which are not log concave (look it up).
 \end{enumerate}
-The full conditional distribution of $\tau_k$ for $k=1,2,\dots,n_{b}-1$ is
+
+Let $\delta_k = \tau_k - \tau_{k-1}$ for $k=1,2,\dots,n_b$. Then the determinant of the Jacobian is $1$ full conditional of $\delta_{1:n_b}$ is
 \begin{align*}
-p(\tau_k|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{i=1}^{\tilde{n}_k + 1}(\tilde{t}_{ik} - \tau_k)^2\right] \frac{\left(\frac{\lambda_k}{\lambda_{k+1}}\right)^{\Psi(\tau_k)}}{\Gamma\left[\Psi(\tau_{k+1}) - \Psi(\tau_k)\right]\Gamma\left[\Psi(\tau_{k}) - \Psi(\tau_{k-1})\right]}1(\tau_{k-1}\le \tau_k \le \tau_{k+1})
+p(\bm{\delta}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \sum_{l=1}^k\delta_l\right)^2 - \frac{1}{10}\sum_{k=1}^{n_b}\delta_{k}\right]\\
+&\times \prod_{k=1}^{n_b}\Gamma(\psi_k + \eta_k)\phi^{\psi_k}1(0\le \delta_k).
 \end{align*}
-and the full conditional of $\tau_{n_b}$ is
+Finally let $\zeta_k = \log(\delta_k)$ for $k = 1, 2, \dots, n_b$. Then the determinate of the Jacobian is $\prod_{k=1}^{n_b}e^{\zeta_k}$ and the full conditional of $\zeta_{1:n_b}$ is
 \begin{align*}
-p(\tau_{n_b}|...) \propto \exp\left[-\frac{1}{2\sigma^2}\sum_{i=1}^{\tilde{n}_{n_b} + 1}(\tilde{t}_{in_b} - \tau_{n_b})^2\right] \frac{\lambda_{n_b}^{\Psi(\tau_{n_b})}}{\Gamma\left[\Psi(\tau_{n_b}) - \Psi(\tau_{n_b-1})\right]}1(\tau_{n_b-1}\le \tau_{n_b}).
+p(\bm{\zeta}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \sum_{l=1}^ke^{\zeta_l}\right)^2 - \frac{1}{10}\sum_{k=1}^{n_b}e^{\zeta_k} + \sum_{k=1}^{n_b}{\zeta_k}\right] \prod_{k=1}^{n_b}\Gamma(\psi_k + \eta_k)\phi^{\psi_k}.
 \end{align*}
-Define the sets $A_k = [\tau_{k-1}, \tau_{k+1}$ for $k = 1, 2, \dots, n_b-1$ and $A_{n_b} = [\tau_{n_b -1}, \infty)$. Let $l_k$ and $u_k$ denote the lower and upper bounds of $A_k$ respectivfely. Then we will use a random walk Metropolis algorithm on each coordinate with a truncated normal proposal distribution $N_{A_k}(\tau_k, h_k^2)$. Then the acceptance rate of the Metropolis step for $\tau_k$ is
+
+For an intial sampler, we will use a random walk Metropolis algorithm on each coordinate with a normal proposal distribution $N(\zeta_k, h_k^2)$. Then the acceptance rate of the Metropolis step for $\zeta_k$ is
 \begin{align*}
-R_k = \frac{p(\tau_k^{(prop)}|\dots)\left[\Phi\left(\frac{u_k - \tau_k^{(old)}}{h_k}\right) - \Phi\left(\frac{l_k - \tau_k^{(old)}}{h_k}\right)\right]}{p(\tau_k^{(old)}|\dots)\left[\Phi\left(\frac{u_k - \tau_k^{(prop)}}{h_k}\right) - \Phi\left(\frac{l_k - \tau_k^{(prop)}}{h_k}\right)\right]}.
+R_k = \frac{p(\zeta_k^{(prop)}|\dots)}{p(\zeta_k^{(old)}|\dots)} = \frac{p(\bm{\zeta}_{1:n_b}^{(prop)}|\dots)}{p(\zeta_{1:n_b}^{(old)}|\dots)}
 \end{align*}
-where $\tau_k^{(old)}$ is the previous value in the chain and $\tau_k^{(prop)}$ is the proposed value. So the $\tau_k$ step is as follows:
+where $\zeta_k^{(old)}$ is the previous value in the chain, $\zeta_k^{(prop)}$ is the proposed value, $\bm{\zeta}_{1:n_b}^{(old)}$ is the previous value of the entire vector $\bm{\zeta}_{1:n_b}$, and $\bm{\zeta}_{1:n_b}^{(prop)}$ is the same except for $\zeta_k^{(prop)}$ in the $k$'th coordinate. So the $\zeta_k$ step is as follows: for $k=1,2,\dots,n_b$
 \begin{enumerate}
-\item Draw $\tau_k^{(prop)} \sim N_{A_k}(\tau_k^{(t)},h_k^2)$ and compute $R_k$.
-\item Set $\tau_k^{(t+1)} = \tau_k^{(prop)}$ with probability $\min(R_k, 1)$ and $\tau_k^{(t+1)} = \tau_k^{(t)}$ otherwise.
+\item Draw $\zeta_k^{(prop)} \sim N(\zeta_k^{(t)},h_k^2)$.
+\item Compute $\delta_{1:n_b}^{(prop)}$, $\tau_{1:n_b}^{(prop)}$, and $\psi_{1:n_b}^{(prop)}$.
+\item Compute the acceptance rate $R_k$.
+\item Set $\zeta_k^{(t+1)} = \zeta_k^{(prop)}$, $\delta_{1:n_b} = \delta_{1:n_b}^{(prop)}$, $\tau_{1:n_b} = \tau_{1:n_b}^{(prop)}$, and $\psi_{1:n_b} = \psi_{1:n_b}^{(prop)}$ with probability $\min(R_k, 1)$ and $\zeta_k^{(t+1)} = \zeta_k^{(t)}$ otherwise. 
 \end{enumerate}
 For each $k$ the scale parameter $h_k$ must be chosen by the user, which is practically impossible with a large number of blocks in the analysis. So we automatically tune $h_k$ during the the burn in period as follows [CITATION]:
 \begin{enumerate}
 \item Run the algorithm above for $H$ iterations.
-\item For each $k$, compute the observed acceptance rate of the last $H$ iterations: $r_k\#(\tau_k^{(t)} = \tau_k^{(t-1)})/H$.
+\item For each $k$, compute the observed acceptance rate of the last $H$ iterations: $r_k\#(\zeta_k^{(t)} = \zeta_k^{(t-1)})/H$.
 \item If $r_k$ is larger than some target range $[r_l^*, r_h^*]$ update $\log h_k = \log h_k + c$; if lower update $\log h_k = \log h_k - c$.
 \end{enumerate}
 In certain simple cases the optimal acceptance rate for a one-dimensional target has been computed to be approximately $0.44$, so we use the range $[0.4, 0.45]$ as a rough guideline [CITATION]. In order to ensure that the Markov chain converges to the target posterior of distribution this adaptive process must asymptotically stop in some sense --- restricting the process to the burn in is a sufficient condition. In practice as the chain converges in can help to start $H$ small and $c$ large so that the $h_k$'s quickly move to reasonable values, then over time increase $H$ and decrease $c$ for more precise fine tuning. We start with $H=50$ and $c=0.1$
 
-The previous algorithm for the $\tau_k$ steps works but will suffer from slow convergence because the $\tau_k$'s are being updated separately instead of in a block. It is helpful for getting a crude estimate of $\Sigma$, the posterior covariance matrix for $\tau_{1:n_b}$. Given this estimate $\hat{\Sigma}$, we can implement a blockwise Metropolis update for $\tau_{1:n_b}$, which will substantially decrease the number of draws required to adequately characterize the posterior distribution after burn in. First we transform to $\delta_{1:n_b}$ where $\delta_k = \tau_k - \tau_{k-1}$, then to $\zeta_k = \log\delta_k$ to obtain
-\begin{align*}
-p(\zeta_{1:n_b}|...) &\propto  \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \sum_{l=1}^ke^{\zeta_l}\right)^2 - \frac{1}{10}\sum_{k=1}^{n_{b}}e^{\zeta_k} + \sum_{k}^{n_b}\zeta_k\right]\\
-&\times \phi^{\Psi(\sum_{k=1}^{n_b}e^{\zeta_k})}\prod_{k=1}^{n_b}\frac{\lambda_k^{\Psi(\sum_{l=1}^{k}e^{\zeta_l})-\Psi(\sum_{l=1}^{k-1}e^{\zeta_l})}}{\Gamma\left[\Psi(\sum_{l=1}^ke^{\zeta_l}) - \Psi(\sum_{l=1}^{k-1}e^{\zeta_l})\right]}.
-\end{align*}
-Then the Metropolis proposal is drawn from a $N(\zeta_{1:n_b}^{(t)}, h^2\hat{\Sigma})$ distribution where $\zeta_{1:n_b}^{(t)}$ is the previous value of $\zeta_{1:n_b}$ in the chain, $h$ is a user chosen scale parameter, and $\hat{\Sigma}$ is a crude estimate of the posterior covariance matrix for $\zeta_{1:n_b}$ obtained using the single dimensional random walk Metropolis algorithm used above. Then $h$ can be tuned just like the $h_k$'s with a target rate of about $0.24$ that is more appropriate for the high dimensional case, though again this rate was derived for simpler models than our own [CITATION]. If the correlation structure of the $\zeta$'s depends heavily on the values of the other parameters in the model then this algorithm may reject too frequently no matter the value of $h$ because $\hat{\Sigma}$ is a crude estimate of the {\it marginal} posterior for $\zeta_{1:n_b}$. In that case we can simply revert to the original one dimensional random walk Metropolis algorithm.
+The previous algorithm for the $\zeta_k$ steps works but will suffer from slow convergence because the $\zeta_k$'s are being updated separately instead of in a block. It is helpful for getting a crude estimate of the posterior covariance matrix for $\zeta_{1:n_b}$, which we will denote by $\hat{\Sigma}$. Using this we can implement a blockwise Metropolis update for $\zeta_{1:n_b}$, which will substantially decrease the number of draws required to adequately characterize the posterior distribution after burn in. Then the Metropolis proposal is drawn from a $N(\zeta_{1:n_b}^{(t)}, h^2\hat{\Sigma})$ distribution where $\zeta_{1:n_b}^{(t)}$ is the previous value of $\zeta_{1:n_b}$ in the chain, $h$ is a user chosen scale parameter, and $\hat{\Sigma}$ is a crude estimate of the posterior covariance matrix for $\zeta_{1:n_b}$ obtained using the single dimensional random walk Metropolis algorithm used above. The Metropolis acceptance ratio is then $p(\bm{\zeta}_{1:n_b}^{(prop)}|...)/p(\bm{\zeta}_{1:n_b}^{(old)}|...)$. Then $h$ can be tuned just like the $h_k$'s with a target rate of about $0.24$ that is more appropriate for the high dimensional case.
 
 \subsection{Transaction process dispersion --- $\phi$}
 The full conditional density of $\phi$ is
 \begin{align*}
-p(\phi|...) \propto \prod_{k=1}^{n_{b}}\phi^{\psi_k}e^{\lambda_k\phi}p(\phi) \propto \phi^{\sum_{k=1}^{n_{b}}\psi_k}e^{\phi\sum_{k=1}^{n_{b}}\lambda_k}p(\phi).
+p(\phi|...) \propto \phi^{a_\phi + \sum_{k=1}^{n_b}\psi_k}(1-\phi)^{b_\phi + \sum_{k=1}^{n_b}\eta_k}
 \end{align*}
-With $\phi \sim G(a_\phi, b_\phi)$ in the prior, this is a gamma density so the step is simple:
+which is a beta distribution. So this step is simple:
 \begin{enumerate}
-\item Draw $\phi \sim G\left(a_\phi + \sum_{k=1}^{n_{b}}\psi_k, b_{\phi} + \sum_{k=1}^{n_{b}}\lambda_k \right)$.
+\item Draw $\phi \sim B\left(a_\phi + \sum_{k=1}^{n_{b}}\psi_k, b_{\phi} + \sum_{k=1}^{n_{b}}\eta_k \right)$.
 \end{enumerate}
 
-\subsection{Regression parameters --- $\bm{\beta}$}
-The full conditional posterior of $\bm{\beta}$ is closely connected to the functional form of the covariates in time. No matter the functional form, however, the density is complex and a Metropolis step is likely warranted. Recall that since we defined $\psi(t) = e^{\bm{z}(t)'\bm{\beta}}$ we have $\psi_k(\bm{\beta}) = \int_{\tau_{k-1}}^{\tau^k}e^{\bm{z}(t)'\bm{\beta}}dt$ --- in this subsection we write $\psi_k(\bm{\beta})$ to explicitly acknowledge that $\psi_k$ is a function of $\bm{\beta}$. Then the full conditional of $\bm{\beta}$ is
+\subsection{Regression parameters --- $\bm{\gamma}$}
+The full conditional posterior of $\bm{\gamma}$ is closely connected to the functional form of the covariates in time. No matter the functional form, however, the density is complex and a Metropolis step is likely warranted. Recall that since we defined $\psi(t) = e^{\bm{z}(t)'\bm{\gamma}}$ we have $\psi_k(\bm{\gamma}) = \int_{\tau_{k-1}}^{\tau^k}e^{\bm{z}(t)'\bm{\gamma}}dt$ --- in this subsection we write $\psi_k(\bm{\gamma})$ to explicitly acknowledge that $\psi_k$ is a function of $\bm{\gamma}$. Then the full conditional of $\bm{\gamma}$ is
 \begin{align*}
-p(\bm{\beta}|\dots) \propto p(\bm{\beta})\prod_{k=1}^{n_b}\frac{\phi^{\psi_k(\bm{\beta})}\lambda_k^{\psi_k(\bm{\beta}) - 1}}{\Gamma[\psi_k(\bm{\beta})]}
+p(\bm{\gamma}|\dots) \propto p(\bm{\gamma})\prod_{k=1}^{n_b}\phi^{\psi_k(\bm{\gamma})}\Gamma[\psi_k(\bm{\gamma}) + \eta_k]
 \end{align*}
-where in the prior $\bm{\beta} \sim p(\bm{\beta})$ independent of the other parameters. This density is complex and nonstandard since $\psi_k(\bm{\beta})$ enters the gamma function. In the case of $\bm{\beta} = (beta_1, \beta_2)'$ and $\bm{z}(t) = (1, t)'$ we use separate random walk Metropolis steps with a normal proposal and separately tuned standard deviations --- analogous to the algorithm used for the $\tau_k$'s above.
+where in the prior $\bm{\gamma} \sim p(\bm{\gamma})$ independent of the other parameters. This density is complex and nonstandard since $\psi_k(\bm{\gamma})$ enters the gamma function. In the case of $\bm{\gamma} = (\gamma_1, \gamma_2)'$ and $\bm{z}(t) = (1, t)'$ we use separate random walk Metropolis steps with a normal proposal and separately tuned standard deviations --- analogous to the algorithm used for the $\zeta_k$'s above.
 
 \subsection{Transaction arrival times and sizes in MB --- $N(\tau_k)$ and $D_k$}
 First consider transaction sizes, $\bm{d}=(d_1,d_2,\dots,d_{n_d})'$. Let $\bm{d}_k$ denote the sizes of the $M_k - M_{k-1}$ transactions that were stored in block $k$ so that $\bm{d} = (\bm{d}_1',\dots,\bm{d}_{n_{b}}')'$. The full conditional distribution of the $\bm{d}_k$'s is
 \begin{align*}
-p(\bm{d}_{1:n_{b}}|...)\propto \prod_{k=1}^{n_b}\prod_{i=1}^{M_k - M_{k-1}} d_i^{\alpha_d - 1}e^{-d_i\beta_d}1\left(\sum_{i=1}^{M_k - M_{k-1}} d_{ik}= D_k\right)1\left(d_{1k} > \bar{D}_{k-1} - D_{k-1} \mathrm{\ or\ } M_{k-1} = N_{k-1}\right).
+p(\bm{d}_{1:n_{b}}|...)\propto \prod_{k=1}^{n_b}\prod_{i=1}^{M_k - M_{k-1}} d_i^{\alpha - 1}e^{-d_i\beta}1\left(\sum_{i=1}^{M_k - M_{k-1}} d_{ik}= D_k\right)1\left(d_{1k} > \bar{D}_{k-1} - D_{k-1} \mathrm{\ or\ } M_{k-1} = N_{k-1}\right).
 \end{align*}
-The second indicator function is required because if $M_{k-1} < N_{k-1}$ then $N_{k-1} - M_{k-1}$ transactionss must have overflowed into block $k$. So the amount of data from the first transaction of block $k$, $d_{1k}$, must have been greater than the difference between the amount of data in block $k-1$ and the data cap for block $k-1$. Similarly if $M_{k-1} = N_{k-1}$ then we know there was no overflow into block $k$, so we have no reason to think that $d_{1k}$ has a restricted support. Let $\bm{o}_k = \bm{d}_k/D_k$. Then the $\bm{o}_k$'s have potentially truncated independent Dirichlet distributions. That is
+The second indicator function is required because if $M_{k-1} < N_{k-1}$ then $N_{k-1} - M_{k-1}$ transactions must have overflowed into block $k$. So the amount of data from the first transaction of block $k$, $d_{1k}$, must have been greater than the difference between the amount of data in block $k-1$ and the data cap for block $k-1$. Similarly if $M_{k-1} = N_{k-1}$ then we know there was no overflow into block $k$, so $d_{1k}$ does not have restricted support. Let $\bm{o}_k = \bm{d}_k/D_k$. Then the $\bm{o}_k$'s have potentially truncated independent Dirichlet distributions. That is
 \begin{align*}
-p(\bm{o}_{1:n_b}|...)\propto \prod_{k=1}^{n_b} \prod_{i=1}^{M_k - M_{k-1}}o_{ik}^{\alpha_d - 1} 1\left(d_{1k} > [\bar{D}_{k-1} - D_{k-1}]/D_{k} \mathrm{\ or\ } M_{k-1} = N_{k-1}\right).
+p(\bm{o}_{1:n_b}|...)\propto \prod_{k=1}^{n_b} \prod_{i=1}^{M_k - M_{k-1}}o_{ik}^{\alpha - 1} 1\left(d_{1k} > [\bar{D}_{k-1} - D_{k-1}]/D_{k} \mathrm{\ or\ } M_{k-1} = N_{k-1}\right).
 \end{align*}
 So the $\bm{d}$ step to draw from $p(\bm{d}|...)$ is as follows: Let $\bm{1}_n$ denote an $n$-vector of ones. For $k=1,2,\dots,n_b$
 \begin{enumerate}
-\item If $N_k = M_k$ draw $\bm{o}_{k} \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1}})$.
+\item If $N_k = M_k$ draw $\bm{o}_{k} \sim Dir(\alpha\bm{1}_{M_k - M_{k-1}})$.
 
-  Otherwise draw $\bm{o}_{k} \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1}})1(d_{1k} > [\bar{D}_{k-1} - D_{k-1}]/D_k)$.
+  Otherwise draw $\bm{o}_{k} \sim Dir(\alpha\bm{1}_{M_k - M_{k-1}})1(d_{1k} > [\bar{D}_{k-1} - D_{k-1}]/D_k)$.
 \item Set $\bm{d}_k = \bm{o}_kD_k$.
 \end{enumerate}
-To draw from the truncated Dirichlet distribution above, first note that by the properties of the Dirhichlet the marginal distribution of $o_{1k}$ is $Beta(\alpha_d, \alpha_d(M_k - M_{k-1} - 1))$ and conditional on $o_{1k}$, $\bm{o}_{-1,k}/(1 - o_{1k}) \sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1} - 1})$. Then $o_{1k}$ can be drawn from the truncated Beta distribution using the inverse cdf method, resulting in the following two step algorithm to draw from the desired truncated Dirichlet distribution:
+To draw from the truncated Dirichlet distribution above, first note that by the properties of the Dirhichlet the marginal distribution of $o_{1k}$ is $Beta(\alpha, \alpha(M_k - M_{k-1} - 1))$ and conditional on $o_{1k}$, $\bm{o}_{-1,k}/(1 - o_{1k}) \sim Dir(\alpha\bm{1}_{M_k - M_{k-1} - 1})$. Then $o_{1k}$ can be drawn from the truncated Beta distribution using the inverse cdf method, resulting in the following two step algorithm to draw from the desired truncated Dirichlet distribution:
 \begin{enumerate}
-\item Draw $u \sim U(0,1)$ and set $o_{1k} = F^{-1}(u*[1 - F((\bar{D}_{k-1} - D_{k-1})/D_k)])$ where $F$ is the cdf of the $Beta(\alpha_d, \alpha_d(M_k - M_{k-1} - 1))$ distribution.
-\item Draw $\tilde{\bm{o}}_{2:(M_k - M_{k-1})}\sim Dir(\alpha_d\bm{1}_{M_k - M_{k-1} - 1})$ and set $o_{ik} = \tilde{o}_i$ for $i = 2,3,\dots,M_k - M_{k-1}$.
+\item Draw $u \sim U(0,1)$ and set $o_{1k} = F^{-1}(u*[1 - F((\bar{D}_{k-1} - D_{k-1})/D_k)])$ where $F$ is the cdf of the $Beta(\alpha, \alpha(M_k - M_{k-1} - 1))$ distribution.
+\item Draw $\tilde{\bm{o}}_{2:(M_k - M_{k-1})}\sim Dir(\alpha\bm{1}_{M_k - M_{k-1} - 1})$ and set $o_{ik} = \tilde{o}_i$ for $i = 2,3,\dots,M_k - M_{k-1}$.
 \end{enumerate}
+
+Note that to draw from a Dirichlet distribution, $Dir(a_1, a_2, \dots, a_n)$, you simply draw $g_i\stackrel{ind}{\sim} G(a_i,b)$ for any $b>0$, then set $o_i = g_i/\sum_{i=1}^ng_i$. Then to avoid drawing $g_i$'s that are numerically identical to zero --- which occurs ocassionally if $a_i < 1$ --- note that if $x\sim G(a+1,b)$ and $u\sim U(0,1)$ independently, then $y = u^{1/a}x \sim G(a,b)$. [CITATION].
+
+[ADD DETAILS ABOUT TRUNCATED DRAWS, DEALING WITH NUMERICAL ISSUES, AND WHAT TO DO WHEN FOR $N_{n_b}$]
 
 To draw the $N_k$'s first note that their support is restricted by the value of the $M_k$'s. Specifically for $k=1,2,\dots,n_b$ and $N_0 = 0$ we have $M_k \le N_k \le N_{k+1}$. Second, when 
 \begin{align*}
 \sum_{i=1}^{M_k - M_{k-1} + 1}d_{M_{k-1} + i} \le \bar{D}_k
 \end{align*}
-we know that $N_k = M_k$ because otherwise transaction $M_k + 1$ would be in block $k$. If the summation is greater than $D_k$ then it is still possible that $N_k = M_k$ because transaction $d_{M_k + 1}$ could still have arrived later than block $k$. In that case, the density of $N_k$ given $N_{0:(k-1)}$ and all other parameters and processes is given by
+we know that $N_k = M_k$ because otherwise transaction $M_k + 1$ would be in block $k$. If the summation is greater than $D_k$ then it is still possible that $N_k = M_k$ because transaction $d_{M_k + 1}$ could still have arrived later than block $k$. In that case, the pmf of $N_k$ given $N_{-k}$ and all other parameters and processes is given by
 \begin{align*}
-p(N_k|N_{0:(k-1)}, \dots) \propto \frac{\lambda_k^{N_k - N_{k-1}}e^{-\lambda_k}}{(N_k - N_{k-1})!}1(N_k \ge M_k)1(N_k \ge N_{k-1}).
+p(N_k|\bm{N}_{-k}, \dots) \propto \frac{\Gamma(\psi_k + N_k - N_{k-1})}{\Gamma(N_k - N_{k-1} + 1)} \frac{\Gamma(\psi_{k+1} + N_{k+1} - N_{k})}{\Gamma(N_{k+1} - N_{k} + 1)}1(N_{k-1}\le N_k \le N_{k+1})1(M_k\le N_k)
 \end{align*}
-In other words, $\eta_k = N_k - N_{k-1}$ has a truncated Poisson distribution where the support is restricted to $\{M_k - N_{k-1}, M_k - N_{k-1} + 1, \dots \}$. We can easily simulate from this distribution using the inverse cdf method. So we can draw from $p(\bm{N}_{1:n_b}|\dots)$ as follows: For $k=1,2,\dots,n_b$
+In other words the full condtional of $\eta_k = N_k - N_{k-1}$ given $N_{-k}$ is
+\begin{align*}
+p(\eta_k|\bm{N}_{-k}, \dots) \propto \frac{\Gamma(\psi_k + \eta_k)}{\Gamma(\eta_k + 1)} \frac{\Gamma(\psi_{k+1} + N_{k+1} - N_{k-1} -\eta_k)}{\Gamma(N_{k+1} - N_{k-1} - \eta_k + 1)}1(0\le \eta_k \le N_{k+1} - N_{k-1})1(M_k - N_{k-1}\le \eta_k).
+\end{align*}
+This is a discrete distribution on a finite set and can easily be drawn by computing the probability of each element of the set, then sampling one from the set with the computed probabilities.
+
+For $N_{n_b}$ the pmf is slightly different:
+\begin{align*}
+p(\eta_{n_b}|\bm{N}_{-{n_b}}, \dots) \propto \frac{\Gamma(\psi_{n_b} + \eta_{n_b})}{\Gamma(\eta_{n_b} + 1)} \phi^{\psi_{n_b}}(1-\phi)^{\eta_{n_b}}1(0\le \eta_{n_b})1(M_{n_b} - N_{n_b-1}\le \eta_{n_b}).
+\end{align*}
+This is a (potentially) truncated negative binomial distribution, and can be drawn from using the algorithm in [CITATION].
+So we can easily simulate each of $N_k$ given $N_{-k}$ as follows: For $k=1,2,\dots,n_b-1$
 \begin{enumerate}
 \item If $\sum_{i=1}^{M_k - M_{k-1} + 1} d_{M_k + i} \le \bar{D}_k$ set $N_k = M_k$.
 
-Otherwise, draw $\eta_k \sim Poi(\lambda_k)1(\eta_k \ge M_k - N_{k-1})$ and set $N_k = N_{k-1} + \eta_k$.
+Otherwise, compute $p_\eta$ for each $\eta \in A = \{ \max(0, M_k - N_{k-1}), \max(0, M_k - N_{k-1}) + 1, \dots, N_{k+1} - N_{k-1}\}$ and draw $\eta_k\sim (A,\bm{p}_\eta)$ and set $N_k = N_{k-1} + \eta_k$.
 \end{enumerate}
+Then for $N_{n_b}$:
+\begin{enumerate}
+\item If $\sum_{i=1}^{M_{n_b} - M_{n_b-1} + 1} d_{M_{n_b} + i} \le \bar{D}_{n_b}$ set $N_{n_b} = M_{n_b}$.
+
+Otherwise draw $\eta_{n_b}\sim NB(\psi_{n_b}, 1-\phi)1(\eta_{n_b}\ge \max(0, M_{n_b} - N_{n_b-1}))$ and set $N_{n_b} = \eta_{n_b} + N_{n_b - 1}$.
+\end{enumerate}
+Note that the intermediate values of the $\eta_k$ generated in these steps are NOT the correct values of the $\eta_k$'s after each step is completed.
+
 \subsection{Block size caps --- $\bar{D}_k$}
 Since the caps are independent discrete uniform in the prior, they are independent in their full conditional and for each block $k$, there are two possibilities:
 \begin{enumerate}
@@ -282,22 +314,26 @@ Since the caps are independent discrete uniform in the prior, they are independe
 \end{enumerate}
 In the first case this should completely determine the value of $\bar{D}_k$ since transaction sizes are much smaller than the differences between possible caps. In both cases we draw $\bar{D}_k$ from a discrete uniform distribution over the set of possible caps given the relevant constraint above --- sometimes that distribution puts all of the mass on a single value.
 
-\subsection{Transaction data parameters --- $\alpha_d$ and $\beta_d$}
-The full conditional distribution of $(\alpha_d,\beta_d)$ is 
+\subsection{Transaction data parameters --- $\alpha$ and $\beta$}
+The full conditional distribution of $(\alpha,\beta)$ is 
 \begin{align*}
-p(\alpha_d,\beta_d|...) \propto p(\alpha_d)p(\beta_d) \prod_{i=1}^{n_d}\frac{\beta_d^{\alpha_d}}{\Gamma(\alpha_d)}d_i^{\alpha_d - 1}e^{-\beta_dd_i}.
+p(\alpha,\beta|...) \propto p(\alpha)p(\beta) \prod_{i=1}^{n}\frac{\beta^{\alpha}}{\Gamma(\alpha)}d_i^{\alpha - 1}e^{-\beta d_i}.
 \end{align*}
-When $\beta_d \sim G(a_\beta, b_\beta)$ in the prior, its full conditional becomes
+When $\beta \sim G(a_\beta, b_\beta)$ in the prior, its full conditional becomes
 \begin{align*}
-p(\beta_d|...) \propto \beta_d^{\alpha_dn_d + a_{\beta} - 1}e^{-\beta_d\left(\sum_{i=1}^{n_d}d_i + b_{\beta}\right)},
+p(\beta|...) \propto \beta^{\alpha n_d + a_{\beta} - 1}e^{-\beta\left(\sum_{i=1}^{n_d}d_i + b_{\beta}\right)},
 \end{align*}
-which is another gamma distribution. The full conditional of $\alpha_d$ is complex no matter what its prior is since $\alpha_d$ enters the gamma function, and has the form
+which is another gamma distribution. The full conditional of $\alpha$ is complex no matter what its prior is since $\alpha$ enters the gamma function, and has the form
 \begin{align*}
-p(\alpha_d|...) &\propto p(\alpha_d)\frac{\left(\beta_d^{n_d}\prod_{i=1}^{n_d}d_i\right)^{\alpha_d}}{\Gamma(\alpha_d)^{n_d}}\\
-\intertext{which in the case of a gamma prior on $\alpha_d$ is}
-p(\alpha_d|...) &\propto \alpha_d^{a_\alpha - 1}\frac{\left(e^{-b_\alpha}\beta_d^{n_d}\prod_{i=1}^{n_d}d_i\right)^{\alpha_d}}{\Gamma(\alpha_d)^{n_d}}.
+p(\alpha|...) &\propto p(\alpha)\frac{\left(\beta^{n_d}\prod_{i=1}^{n_d}d_i\right)^{\alpha}}{\Gamma(\alpha)^{n_d}}\\
+\intertext{which in the case of a gamma prior on $\alpha$ is}
+p(\alpha|...) &\propto \alpha^{a_\alpha - 1}\frac{\left(e^{-b_\alpha}\beta^{n_d}\prod_{i=1}^{n_d}d_i\right)^{\alpha}}{\Gamma(\alpha)^{n_d}}.
 \end{align*}
-This density is log concave so we will use adaptive rejection sampling to draw from it [CITATION].
+This density is log concave when $a_\alpha \ge 0$ but not in general, so we will use a random walk Metropolis step. First full conditional of $\xi = \log(\alpha)$ is
+\begin{align*}
+p(\xi|...) &\propto e^{a_\alpha\xi}\frac{\left(e^{-b_\alpha}\beta^{n_d}\prod_{i=1}^{n_d}d_i\right)^{e^{\xi}}}{\Gamma(e^{\xi})^{n_d}}.
+\end{align*}
+Then the Metropolis proposal is $\xi^{(prop)}\sim N(\xi^{(t)},h_{\xi}^2)$, the acceptance ratio is $R_{\xi} = p(\xi^{(prop)}|...)/p(\xi^{(t)}|...)$, and $h_{\xi}$ is a user defined parameter that can be tuned analogously to the previous random walk Metropolis steps.
 \bibliographystyle{apalike} 
 \bibliography{../paper/btc}
 
