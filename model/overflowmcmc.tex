@@ -6,7 +6,7 @@
 
 \begin{document}
 \section{Introduction}
-This note describes the MCMC algorithm used to fit the overflow model. The bulk of this material may end up in a technical appendix or as a section of the paper. Section \ref{sec:model} briefly describes the model and section \ref{sec:mcmc} describes the MCMC strategy for computing the posterior distribution.
+This note describes the MCMC algorithm used to fit the overflow model. The bulk of this material may end up in a technical appendix or as a section of the paper. Section \ref{sec:model} briefly describes the model and Section \ref{sec:mcmc} describes the MCMC strategy for computing the posterior distribution.
 
 \section{The Overflow Model}\label{sec:model}
 The overflow model assumes we observe several pieces of data: 1) a noisy measurement of the arrival time of block $k$ measured in minutes since the zero'th block and denoted by $t_k$, 2) the number of transactions in block $k$ denoted by $M_k - M_{k-1}$ so that $M_k$ is the number of transactions on the entire block chain up to and including block $k$, and 3) the amount of transaction data stored in block $k$ measured in MBs and denoted by $D_k$, all observed for $k=1,2,\dots,n_{b}$.
@@ -24,7 +24,7 @@ By the design of the bitcoin protocol, blocks are a Poisson process with rate $1
 \end{align*}
 
 \subsection{Transaction arrival process}
-We will assume that transactions arrive according to a non-homogenous Poisson process. Let $N(\tau)$ denote the number of transactions that have arrive by time $\tau$, and let $\lambda(\tau)$ denote some intensity function such that $\lambda(\tau) > 0$ for all times $\tau$. Then any collection of non-overlapping increments $\left\{N(\tau_i + \delta_i) - N(\tau_i)\right\}$ where $\delta_i>0$ for all $i$ are independent with distribution
+We will assume that transactions arrive according to a non-homogenous Poisson process. Let $N(\tau)$ denote the number of transactions that have arrived by time $\tau$, and let $\lambda(\tau)$ denote some intensity function such that $\lambda(\tau) > 0$ for all times $\tau$. Then any collection of non-overlapping increments $\left\{N(\tau_i + \delta_i) - N(\tau_i)\right\}$ where $\delta_i>0$ for all $i$ are independent with distribution
 \begin{align*}
 N(\tau_i + \delta_i) - N(\tau_i) \sim Poi(\Lambda(\tau_i + \delta_i) - \Lambda(\tau_i))
 \end{align*}
@@ -61,7 +61,7 @@ We can represent this part of the model more compactly by integrating out the $\
 \end{align*}
 with pmf
 \begin{align*}
-P(\eta_k = \eta|\delta_{1:n_{b}}) \frac{\Gamma(\psi_k + \eta)}{\Gamma(\eta + 1)}\phi^{\psi_k}(1-\phi)^{\eta}
+P(\eta_k = \eta|\delta_{1:n_{b}}) = \frac{\Gamma(\psi_k + \eta)}{\Gamma(\psi_k)\Gamma(\eta + 1)}\phi^{\psi_k}(1-\phi)^{\eta}
 \end{align*}
 for $\eta=0,1,\dots$ We will use this representation of the model both for simplified exposition and later for cheaper MCMC.
 
@@ -99,7 +99,7 @@ p(\sigma^2,\phi,\beta,\alpha_d,\beta_d,\bar{D}_1,\dots,\bar{D}_{n_{b}}) = p(\sig
 \subsection{Prior on $\sigma^2$}
 The expected size of the measurement error on $t_k$ is controlled by $\sigma^2$ --- the larger $\sigma^2$, the farther away we expect $t_k$ to be from $\tau_k$. We will use a half-$t$ prior on $\sigma$ which can be written as the following prior on $\sigma^2$:
 \begin{align*}
-\sigma^2|\omega &\sim IG(v/2, \omega); && \omega \sim G(1/2, s^2/2).
+\sigma^2|\omega &\sim IG(v/2, \omega); && \omega \sim G(1/2, 1/\{2vs^2\}).
 \end{align*}
 This yields a $t_{v}(0,s^2)1(\sigma>0)$ prior on $\sigma$ where $s^2$ is a scale parameter and $v$ is a degrees of freedom parameter. We use $v=1$ so that the prior on $\sigma$ has a half-Cauchy distribution with median $s$. To gain some intuition in order to set an appropriate value for $s$, suppose that the measurement error distribution was not truncated. Then we would expect $68\%$ of observed block arrival times to be within $\sigma$ of the actual arrival time. A reasonable a priori guess for $\sigma$ is then one minute, so we set $s=1$ so that the median value of $\sigma$ in its prior is one. This prior is only weakly informative --- the right tail is gently sloped so that the data will quickly overwhelm the prior as observations pile up [CITE GELMAN VARIANCE PAPER]. 
 
@@ -113,12 +113,12 @@ Setting $\phi = 0.5$ means that the variance of $N(\tau)$ is twice its mean. Abs
 \subsection{Prior on $\bm{\gamma}$}
 As we will see in the next section, there is no convenient conditionally conjugate form for $\bm{\gamma}$, so there is no computational trade-off associated with choosing a prior which more accurately reflects prior knowledge. We will consider $\bm{\gamma}$ much like a regression parameter and set
 \begin{align*}
-\bm{\beta} \sim N(\bm{g}_\gamma, \bm{S}_\gamma)
+\bm{\gamma} \sim N(\bm{g}_\gamma, \bm{S}_\gamma)
 \end{align*}
 where $\bm{g}_\gamma$ is a mean vector and $\bm{S}_\gamma$ is a covariance matrix. We will use a weakly informative prior with $\bm{g}_\gamma = \bm{0}$ and $\bm{S}_\gamma = s^2_\gamma\bm{I}$ where $s_\gamma = 100$.  [MAYBE SOMETHING WITH FATTER TAILS HERE? MAYBE NOTE THAT NONINFORMATIVE PRIOR IS NOT A GOOD IDEA SINCE WE WANT TO GUARANTEE POSTERIOR PROPRIETY --- SAME FOR $s_\gamma$ TOO LARGE (VIVEK'S PAPER)]
 
 \subsection{Priors on $\alpha$ and $\beta$}
-The conditionally conjugate prior for $beta$ is a gamma while $\alpha$ has no convenient conditionally conjugate form. We will assume that $\beta \sim G(a_\beta, b_\beta)$ and $\alpha \sim G(a_\alpha, b_\alpha)$. In order to choose $a_\alpha$, $b_\alpha$, $a_\beta$, and $b_\beta$, consider that $E[d_i|\alpha,\beta] = \alpha/\beta$. But 
+The conditionally conjugate prior for $\beta$ is a gamma while $\alpha$ has no convenient conditionally conjugate form. We will assume that $\beta \sim G(a_\beta, b_\beta)$ and $\alpha \sim G(a_\alpha, b_\alpha)$. In order to choose $a_\alpha$, $b_\alpha$, $a_\beta$, and $b_\beta$, consider that $E[d_i|\alpha,\beta] = \alpha/\beta$. But 
 \begin{align*}
 E\left[\frac{\alpha}{\beta}\right] = E[\alpha]E\left[\frac{1}{\beta}\right] = \frac{a_\alpha}{b_\alpha}\frac{b_\beta}{a_\beta - 1}.
 \end{align*}
@@ -138,9 +138,9 @@ We will put a discrete prior on each of the $\bar{D}_k$'s. Theoretically a miner
 
 \section{Markov Chain Monte Carlo}\label{sec:mcmc}
 
-In order to simulate from the posterior we construct a Gibbs sampler using data augmentation to expand the state space and Metropolis steps where appropriate. We use data augmentation in two ways. First, in order to more effectively deal with the truncated distribution in the measurement error model for block arrival times we introduce $\tilde{\bm{t}}_k=(\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}, t_k)$ as the original $t_k$ along with $\tilde{n}_k$ draws from the untruncated normal distribution for $t_k$ that occurred before $t_k$ was drawn from the restricted support. Second, the models for $\eta_{1:n_{b}}$ and $d_{1:n_d}$ induce a model for $(M_{1:n_{b}},D_{1:n_d})$ since the latter are a detrministic function of the former, but this model is not easy work with. Instead, we explicitly use $\eta_{1:n_{b}}$ and $d_{1:n_d}$ in the Gibbs sampler as additional data augmentation.
+In order to simulate from the posterior we construct a Gibbs sampler using data augmentation to expand the state space and Metropolis steps where appropriate. We use data augmentation in two ways. First, in order to more effectively deal with the truncated distribution in the measurement error model for block arrival times we introduce $\widetilde{\bm{t}}_k=(\widetilde{t}_{1k},\dots,\widetilde{t}_{\widetilde{n}_kk}, t_k)$ as the original $t_k$ along with $\widetilde{n}_k$ draws from the untruncated normal distribution for $t_k$ that occurred before $t_k$ was drawn from the restricted support. Second, the models for $\eta_{1:n_{b}}$ and $d_{1:n_d}$ induce a model for $(M_{1:n_{b}},D_{1:n_d})$ since the latter are a deterministic function of the former, but this model is not easy work with. Instead, we explicitly use $\eta_{1:n_{b}}$ and $d_{1:n_d}$ in the Gibbs sampler as additional data augmentation.
 
-\subsection{Data augmentation for truncated distributions --- $\tilde{n}_k$ and $\tilde{t}_k$}
+\subsection{Data augmentation for truncated distributions --- $\widetilde{n}_k$ and $\widetilde{t}_k$}
 For block $k=1,2,n_{b}$ the measurement error model on block arrival times is
 \begin{align*}
 t_k|t_{1:(k-1)} \sim N(\tau_k,\sigma^2)1(t_k > m_k)
@@ -149,45 +149,45 @@ where $m_k = \mathrm{median}(t_{k - 1:11})$ with density
 \begin{align*}
 p(\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2) \propto \sigma^{-n_{b}}\frac{\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}(t_k - \tau_k)^2\right]}{\prod_{k=1}^{n_{b}}\left[1 - \Phi\left(\frac{m_k - \tau_k}{\sigma}\right)\right]}
 \end{align*}
-where $\Phi(.)$ is the standard normal cdf. Drawing from the full conditional distributions of $\sigma^2$ and $\tau_k$ can be challenging since both parameters enter into the normalizing constant of $p(\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2)$. Consider an underlying process which gives rise to the truncated distribution --- instead of simply drawing $t_k$ from the truncated normal distribution, this process draws from the untruncated normal distribution until it obtains a draw from the restricted region of the parameter space, i.e. until it successfully obtains a $t_k > m_k$. Let $\tilde{n}_k$ be the number of failures before the observed success $t_k$. Then $\tilde{n}_k$ has a negative binomial distribution, specifically $\tilde{n}_k \sim NB(1, \rho_k)$ with density
+where $\Phi(.)$ is the standard normal cdf. Drawing from the full conditional distributions of $\sigma^2$ and $\tau_k$ can be challenging since both parameters enter into the normalizing constant of $p(\bm{t_{1:n_{b}}}|\bm{\tau}_{1:n_{b}},\sigma^2)$. Consider an underlying process which gives rise to the truncated distribution --- instead of simply drawing $t_k$ from the truncated normal distribution, this process draws from the untruncated normal distribution until it obtains a draw from the restricted region of the parameter space, i.e. until it successfully obtains a $t_k > m_k$. Let $\widetilde{n}_k$ be the number of failures before the observed success $t_k$. Then $\widetilde{n}_k$ has a negative binomial distribution, specifically $\widetilde{n}_k \sim NB(1, \rho_k)$ with density
 \begin{align*}
-p(\tilde{n}_k|\tau_k,\sigma^2) = \rho_k^{\tilde{n}_k}(1 - \rho_k)
+p(\widetilde{n}_k|\tau_k,\sigma^2) = \rho_k^{\widetilde{n}_k}(1 - \rho_k)
 \end{align*}
-where $\rho_k$ is the probability of failure, i.e. $\rho_k = \Phi([m_k - \tau_k]/\sigma)$. Conditional on $\tilde{n}_k$ the density of the $\tilde{n}_k$ failures, $\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}$, is again truncated normal, but this time truncated to the opposite end of the parameter space. That is for $i = 1,\dots,\tilde{n}_k$
+where $\rho_k$ is the probability of failure, i.e. $\rho_k = \Phi([m_k - \tau_k]/\sigma)$. Conditional on $\widetilde{n}_k$ the density of the $\widetilde{n}_k$ failures, $\widetilde{t}_{1k},\dots,\widetilde{t}_{\widetilde{n}_kk}$, is again truncated normal, but this time truncated to the opposite end of the parameter space. That is for $i = 1,\dots,\widetilde{n}_k$
 \begin{align*}
-\tilde{t}_{ik}\stackrel{iid}{\sim}N(\tau_k,\sigma^2)1(t_k < m_k).
+\widetilde{t}_{ik}\stackrel{iid}{\sim}N(\tau_k,\sigma^2)1(t_k < m_k).
 \end{align*}
 So the data augmentation step of the Gibbs sampler consists of the following substeps: for $k=1,2,\dots,n_{b}$,
 \begin{enumerate}
-\item Draw $\tilde{n}_k \sim NB(1,\rho_k)$ where $\rho_k = \Phi([ m_k -  \tau_k]/\sigma)$.
-\item If $\tilde{n}_k > 0$, for $i=1,\dots,\tilde{n}_k$ draw $\tilde{t}_{ik} \sim N(\tau_k,\sigma^2)1(t_k < m_k)$ and form $\tilde{\bm{t}}_k = (\tilde{t}_{1k},\dots,\tilde{t}_{\tilde{n}_kk}, t_k)'$.
+\item Draw $\widetilde{n}_k \sim NB(1,\rho_k)$ where $\rho_k = \Phi([ m_k -  \tau_k]/\sigma)$.
+\item If $\widetilde{n}_k > 0$, for $i=1,\dots,\widetilde{n}_k$ draw $\widetilde{t}_{ik} \sim N(\tau_k,\sigma^2)1(t_k < m_k)$ and form $\widetilde{\bm{t}}_k = (\widetilde{t}_{1k},\dots,\widetilde{t}_{\widetilde{n}_kk}, t_k)'$.
 \end{enumerate}
-For simplicity in the other Gibbs steps define $\tilde{t}_{\tilde{n}_k + 1,k}\equiv t_k$.
+For simplicity in the other Gibbs steps define $\widetilde{t}_{\widetilde{n}_k + 1,k}\equiv t_k$.
 
-It is tempting to imbue $\tilde{n}_k$ and $\tilde{t_{ik}}$ with some interpretation relative to the model, e.g. as in [CITE GELMAN PAPER]. For example, $\tilde{n}_k$ may represent the number of blocks that were rejected by the Bitcoin protocol for having a timestamp earlier than the median of the previous elevent blocks. While tempting this interpretation is not strictly speaking correct. When a block is rejected by the protocol a new block does not appear instantaneously since it takes time for another miner to discover the block. So the arrival times and thus measurement error distributions of the rejected block and the accepted block are not the same. While the interpretation is not correct, it is good to be inspired by computational tricks to create better model [CITE SAME GELMAN PAPER] and perhaps something similar to this negative binomial structure can be used to add rejected blocks as a component of the model, though we do not explore this possibility here.
+It is tempting to imbue $\widetilde{n}_k$ and $\widetilde{t}_{ik}$ with some interpretation relative to the model, e.g. as in [CITE GELMAN PAPER]. For example, $\widetilde{n}_k$ may represent the number of blocks that were rejected by the Bitcoin protocol for having a timestamp earlier than the median of the previous elevent blocks. While tempting this interpretation is not strictly speaking correct. When a block is rejected by the protocol a new block does not appear instantaneously since it takes time for another miner to discover the block. So the arrival times and thus measurement error distributions of the rejected block and the accepted block are not the same. While the interpretation is not correct, it is good to be inspired by computational tricks to create better model [CITE SAME GELMAN PAPER] and perhaps something similar to this negative binomial structure can be used to add rejected blocks as a component of the model, though we do not explore this possibility here.
 
 \subsection{Measurement error variance --- $\sigma^2$}
-The full conditional distribution of the measurement error variance, $\sigma^2$, depends only on $\tilde{\bm{t}}_{1:n_{b}}$ and $\tau_{1:n_{b}}$. It is
+The full conditional distribution of the measurement error variance, $\sigma^2$, depends only on $\widetilde{\bm{t}}_{1:n_{b}}$ and $\tau_{1:n_{b}}$. It is
 \begin{align*}
-p(\sigma^2|...) \propto \sigma^{-(n_{b} + \sum_{k=1}^{n_{b}}\tilde{n}_k)}\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2\right]p(\sigma^2)
+p(\sigma^2|...) \propto \sigma^{-(n_{b} + \sum_{k=1}^{n_{b}}\widetilde{n}_k)}\exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\widetilde{n}_k}(\widetilde{t}_{ik} - \tau_k)^2\right]p(\sigma^2)
 \end{align*}
-where $p(\sigma^2)$ is the density of the prior distribution on $\sigma^2$. With the half-$t$ prior on $\sigma$ discussed above and letting $a_\sigma = (n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k)/2$ and $b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2$ the full conditional distribution of $(\sigma^2,\omega)$ is
+where $p(\sigma^2)$ is the density of the prior distribution on $\sigma^2$. With the half-$t$ prior on $\sigma$ discussed above and letting $a_\sigma = (n_{b} + \sum_{k=1}^{n_b}\widetilde{n}_k)$ and $b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\widetilde{n}_k}(\widetilde{t}_{ik} - \tau_k)^2$ the full conditional distribution of $(\sigma^2,\omega)$ is
 \begin{align*}
-p(\sigma^2,\omega|...) \propto (\sigma^2)^{-(a_\sigma+v)/2-1}\exp\left[-\frac{b_\sigma}{\sigma^2}\right]\exp\left[-\frac{\omega}{\sigma^2}\right]\omega^{(v + 1)/2 - 1}\exp\left[-\frac{\omega}{v s^2}\right].
+p(\sigma^2,\omega|...) \propto (\sigma^2)^{-(a_\sigma+v)/2-1}\exp\left[-\frac{b_\sigma}{\sigma^2}\right]\exp\left[-\frac{\omega}{\sigma^2}\right]\omega^{(v + 1)/2 - 1}\exp\left[-\frac{\omega}{2 v s^2}\right].
 \end{align*}
 So we draw $\sigma^2$ and $\omega$ in two separate Gibbs steps:
 \begin{enumerate}
-\item Draw $\omega \sim G\left(\frac{v + 1}{2}, \frac{1}{\sigma^2} + \frac{1}{v s^2}\right)$ and form\footnote{The inconsistency in notation between the definition of $a_\sigma$ and $b_\sigma$ is a consequence of matching notation to the R code supplied for implementing this MCMC algorithm.}
+\item Draw $\omega \sim G\left(\frac{v + 1}{2}, \frac{1}{\sigma^2} + \frac{1}{v s^2}\right)$ and form
 \begin{align*}
-a_\sigma = \frac{n_{b} + \sum_{k=1}^{n_b}\tilde{n}_k + v}{2} &&\mbox{  and  }&& b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k}(\tilde{t}_{ik} - \tau_k)^2;
+a_\sigma = v + n_{b} + \sum_{k=1}^{n_b}\widetilde{n}_k &&\mbox{  and  }&& b_\sigma = \sum_{k=1}^{n_{b}}\sum_{i=1}^{\widetilde{n}_k}(\widetilde{t}_{ik} - \tau_k)^2;
 \end{align*}
-\item Draw $\sigma^2 \sim  IG\left(a_\sigma, b_\sigma/2 + \omega\right)$.
+\item Draw $\sigma^2 \sim  IG\left(a_\sigma/2, b_\sigma/2 + \omega\right)$.
 \end{enumerate}
 
 \subsection{Block arrival times --- $\tau_k$}
 The full conditional distribution of the block arrival times is more complicated:
 \begin{align*}
-p(\bm{\tau}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\\
+p(\bm{\tau}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\widetilde{n}_k+1}\left(\widetilde{t}_{ik} - \tau_k\right)^2 - \frac{1}{10}\tau_{n_{b}}\right]\\
 &\times \prod_{k=1}^{n_b}\Gamma[\psi_k(\tau_{k}, \tau_{k-1}) + \eta_k]\phi^{\psi_k(\tau_k,\tau_{k-1})}1(0\le \tau_1 \le \tau_2 \le \hdots \le \tau_{n_b})
 \end{align*}
 where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gamma function. Here we make explicit that $\psi_k$ is a function of $\tau_k$ and $\tau_{k-1}$. Even if $\Psi(\tau)$ is some nice known form, this density is nonstandard because the $\tau_k$'s enter the gamma function. Some ideas for handling this step:
@@ -201,12 +201,12 @@ where $\tau_0\equiv0$ and $\Gamma(x) = \int_0^\infty t^{x-1}e^{-t}dt$ is the gam
 
 Let $\delta_k = \tau_k - \tau_{k-1}$ for $k=1,2,\dots,n_b$. Then the determinant of the Jacobian is $1$ full conditional of $\delta_{1:n_b}$ is
 \begin{align*}
-p(\bm{\delta}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \sum_{l=1}^k\delta_l\right)^2 - \frac{1}{10}\sum_{k=1}^{n_b}\delta_{k}\right]\\
+p(\bm{\delta}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\widetilde{n}_k+1}\left(\widetilde{t}_{ik} - \sum_{l=1}^k\delta_l\right)^2 - \frac{1}{10}\sum_{k=1}^{n_b}\delta_{k}\right]\\
 &\times \prod_{k=1}^{n_b}\Gamma(\psi_k + \eta_k)\phi^{\psi_k}1(0\le \delta_k).
 \end{align*}
 Finally let $\zeta_k = \log(\delta_k)$ for $k = 1, 2, \dots, n_b$. Then the determinate of the Jacobian is $\prod_{k=1}^{n_b}e^{\zeta_k}$ and the full conditional of $\zeta_{1:n_b}$ is
 \begin{align*}
-p(\bm{\zeta}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\tilde{n}_k+1}\left(\tilde{t}_{ik} - \sum_{l=1}^ke^{\zeta_l}\right)^2 - \frac{1}{10}\sum_{k=1}^{n_b}e^{\zeta_k} + \sum_{k=1}^{n_b}{\zeta_k}\right] \prod_{k=1}^{n_b}\Gamma(\psi_k + \eta_k)\phi^{\psi_k}.
+p(\bm{\zeta}_{1:n_{b}}|...) \propto & \exp\left[-\frac{1}{2\sigma^2}\sum_{k=1}^{n_{b}}\sum_{i=1}^{\widetilde{n}_k+1}\left(\widetilde{t}_{ik} - \sum_{l=1}^ke^{\zeta_l}\right)^2 - \frac{1}{10}\sum_{k=1}^{n_b}e^{\zeta_k} + \sum_{k=1}^{n_b}{\zeta_k}\right] \prod_{k=1}^{n_b}\Gamma(\psi_k + \eta_k)\phi^{\psi_k}.
 \end{align*}
 
 For an intial sampler, we will use a random walk Metropolis algorithm on each coordinate with a normal proposal distribution $N(\zeta_k, h_k^2)$. Then the acceptance rate of the Metropolis step for $\zeta_k$ is
@@ -266,7 +266,7 @@ So the $\bm{d}$ step to draw from $p(\bm{d}|...)$ is as follows: Let $\bm{1}_n$ 
 To draw from the truncated Dirichlet distribution above, first note that by the properties of the Dirhichlet the marginal distribution of $o_{1k}$ is $Beta(\alpha, \alpha(M_k - M_{k-1} - 1))$ and conditional on $o_{1k}$, $\bm{o}_{-1,k}/(1 - o_{1k}) \sim Dir(\alpha\bm{1}_{M_k - M_{k-1} - 1})$. Then $o_{1k}$ can be drawn from the truncated Beta distribution using the inverse cdf method, resulting in the following two step algorithm to draw from the desired truncated Dirichlet distribution:
 \begin{enumerate}
 \item Draw $u \sim U(0,1)$ and set $o_{1k} = F^{-1}(u*[1 - F((\bar{D}_{k-1} - D_{k-1})/D_k)])$ where $F$ is the cdf of the $Beta(\alpha, \alpha(M_k - M_{k-1} - 1))$ distribution.
-\item Draw $\tilde{\bm{o}}_{2:(M_k - M_{k-1})}\sim Dir(\alpha\bm{1}_{M_k - M_{k-1} - 1})$ and set $o_{ik} = \tilde{o}_i$ for $i = 2,3,\dots,M_k - M_{k-1}$.
+\item Draw $\widetilde{\bm{o}}_{2:(M_k - M_{k-1})}\sim Dir(\alpha\bm{1}_{M_k - M_{k-1} - 1})$ and set $o_{ik} = \widetilde{o}_i$ for $i = 2,3,\dots,M_k - M_{k-1}$.
 \end{enumerate}
 
 Note that to draw from a Dirichlet distribution, $Dir(a_1, a_2, \dots, a_n)$, you simply draw $g_i\stackrel{ind}{\sim} G(a_i,b)$ for any $b>0$, then set $o_i = g_i/\sum_{i=1}^ng_i$. Then to avoid drawing $g_i$'s that are numerically identical to zero --- which occurs ocassionally if $a_i < 1$ --- note that if $x\sim G(a+1,b)$ and $u\sim U(0,1)$ independently, then $y = u^{1/a}x \sim G(a,b)$. [CITATION].
