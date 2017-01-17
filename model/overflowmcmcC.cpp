@@ -55,7 +55,7 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
 			 double rwc, int H, int tune,
 			 arma::vec lowtarget, arma::vec hightarget, arma::mat tauchol,
 			 Function rtruncnorm, Function rktnb, Function rbetarejC){
-  Rprintf("Initializing 1");
+  //Rprintf("  Initializing 1");
   int nblocks = tau.size();
   arma::vec tau0full(nblocks + 1); tau0full(0) = 0; tau0full.subvec(1, nblocks) = tau;
   arma::vec tau0 = tau0full.subvec(0, nblocks - 1);
@@ -69,9 +69,9 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
   arma::mat taurejs(niter, 1);
   arma::mat gamrejs(niter, 2);
   arma::mat alpharejs(niter, 1);
-  Rprintf(" 2");  
+  //Rprintf("      2");  
   double aomega = (vsigma + 1)/2;
-  double bomega = 1/(vsigma*pow(ssigma, 2.0));
+  double bomega = 1/(2*vsigma*pow(ssigma, 2.0));
   double asigma;
   double con2 = aalpha - 1;
   arma::uvec nds = diff(M);  //////////////////////
@@ -79,7 +79,7 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
   arma::uvec nrej(nblocks);
   arma::vec rho(nblocks);
   arma::uvec nrejcumsum(nblocks);
-  Rprintf(" 3"); 
+  //Rprintf("      3"); 
   double bsigma;
   double omega;
   double sigma2;
@@ -94,7 +94,7 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
   double gamprop;
   arma::vec gamtemp(2);
   double lanum;
-  Rprintf(" 4"); 
+  //Rprintf("      4"); 
   double ladenom;
   int Nover;
   double lowlim;
@@ -103,23 +103,23 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
   int lower;
   int upper;
   arma::vec dk1(nblocks);
-  Rprintf(" 5\n");
+  //Rprintf("      5\n");
   double mnldvec;
   double mnexpldvec;
   double alphaprop;
   int idxklow;
   int idxkhigh;
   double scalebeta = 1/(bbeta + sum(D));
-  Rprintf("Beginning main loop\n");
+  //Rprintf("     Beginning main loop\n");
   for(int iter = 0; iter < niter; ++iter){
     //Rprintf("iteration %i\n", iter);
     // DA step
-    //Rprintf("DA step 1");
+    //Rprintf("     DA step 1");
     for(int k = 0; k < nblocks; ++k){
       rho(k) = R::pnorm(m(k), tau(k), sigma, 0, 0); // = P(t_k < m_k)
       nrej(k) = R::rnbinom(1, rho(k));
     }
-    //Rprintf(" 2\n");
+    //Rprintf("      2\n");
     nrejcumsum = cumsum(nrej + 1);
     arma::vec tfull(nrejcumsum(nblocks - 1));
     bsigma = 0;  // running tally, used in sigma and tau steps -- bsigma == oldsqdiff
@@ -133,25 +133,25 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       bsigma +=	sum(pow( tfull.subvec(nrejcumsum(k) - nrej(k) - 1, nrejcumsum(k) - 1) - tau(k), 2.0));
     }
     // sigma / sigma^2 step
-    //Rprintf("sigma step 1\n");
+    //Rprintf("     sigma step 1\n");
     omega = arma::randg(1, arma::distr_param(aomega, 1/(bomega + 1/sigma)))[0];
-    asigma = (nblocks + sum(nrej) + vsigma)/2;
-    sigma2 = 1/arma::randg(1, arma::distr_param(asigma, 1/(bsigma/2 + omega)))[0];
+    asigma = (nblocks + sum(nrej) + vsigma);
+    sigma2 = 1/arma::randg(1, arma::distr_param(asigma/2, 1/(bsigma/2 + omega)))[0];
     sigma = sqrt(sigma2);
     // tau step
-    //Rprintf("tau step 1");
+    //Rprintf("     tau step 1");
     zetaprop = zeta + taurwsd*tauchol*arma::randn(nblocks);
     deltaprop = exp(zetaprop);
     tauprop = cumsum(deltaprop);
     tau0prop.subvec(1, nblocks - 1) = tauprop.subvec(0, nblocks - 2);
     psiprop = psifun(tauprop, gam, tau0prop);
     double newsqdiff = 0;
-    //Rprintf(" 2");
+    //Rprintf("      2");
     for(int k = 0; k < nblocks; ++k){
       newsqdiff += 
 	sum(pow(tfull.subvec(nrejcumsum(k) - nrej(k) - 1, nrejcumsum(k) - 1) - tauprop(k), 2.0));
     }
-    //Rprintf(" 3");
+    //Rprintf("      3");
     lataunum   = -newsqdiff/(2*sigma2) - tauprop(nblocks - 1)/10 + 
       sum(lgamma(Rcpp::as<Rcpp::NumericVector>(wrap(psiprop + eta)))) - 
       sum(lgamma(Rcpp::as<Rcpp::NumericVector>(wrap(psiprop)))) + 
@@ -160,10 +160,10 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       sum(lgamma(Rcpp::as<Rcpp::NumericVector>(wrap(psi + eta)))) - 
       sum(lgamma(Rcpp::as<Rcpp::NumericVector>(wrap(psi)))) + 
       sum(zeta) + sum(psi)*log(phi);
-    //Rprintf(" 4");
+    //Rprintf("      4");
     if(log(arma::randu(1)[0]) < lataunum - lataudenom){
       //      Rcpp::Rcout << "    tau step  " << sum(psi) << "  " << sum(psiprop) << " accept" << std::endl;
-      //Rprintf(" 5-0\n");
+      //Rprintf("      5-0\n");
       delta = deltaprop;
       tau = tauprop;
       psi = psiprop;
@@ -172,14 +172,14 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       taurejs(iter,0) = 0;
     } else {
       //      Rcpp::Rcout << "    tau step  " << sum(psi) << "  " << sum(psiprop) << " reject" << std::endl;
-      //Rprintf(" 5-1\n");
+      //Rprintf("      5-1\n");
       taurejs(iter,0) = 1;
     }
     // phi step
-    //Rprintf("phi step 1\n");
+    //Rprintf("     phi step 1\n");
     phi = R::rbeta(aphi + sum(psi), bphi + N(nblocks));
     // gamma step
-    //Rprintf("gamma step 1");
+    //Rprintf("     gamma step 1");
     // gamma_1
     gamprop = gam(0) + gamrwsds(0)*arma::randn(1)[0];
     gamtemp(0) = gamprop;
@@ -201,7 +201,7 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       gamrejs(iter, 0) = 1;
     }
     // gamma_2
-    //Rprintf(" 2\n");
+    //Rprintf("      2\n");
     gamprop = gam(1) + gamrwsds(1)*arma::randn(1)[0];
     gamtemp(0) = gam(0);
     gamtemp(1) = gamprop;
@@ -221,69 +221,8 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       //      Rcpp::Rcout << "    gam2 step " << sum(psi) << "  " << sum(psiprop) << " reject" << std::endl;
       gamrejs(iter, 1) = 1;
     }
-    // d step
-    //Rprintf("d step 1\n");
-    Nover = N(nblocks) - M(nblocks);
-    arma::vec ldvec( (Nover > 0) ? N(nblocks) : M(nblocks) + 1);
-    for(int k = 0; k < nblocks; ++k){
-      if(nds(k) > 1){
-    	if(N(k) == M(k)){
-    	  arma::vec lo = rloggamma(nds(k), alpha, 1);
-    	  lo = lo - lo.max();
-    	  double ldexpsum = log(arma::sum(exp(lo)));
-    	  arma::vec ld = log(D(k)) + lo - ldexpsum;
-    	  ldvec.subvec(M(k), M(k+1)-1) = ld;
-    	} else {
-    	  lowlim = (Dbar(k-1) - D(k-1))/D(k);
-    	  if(lowlim > 1){
-    	    Rprintf("k = %i, lowlim = %f, Dk = %f, Dk-1 = %f\n", k, lowlim, D(k-1), D(k));
-    	  }
-    	  // calls from R, slow
-    	  NumericVector nvtemp = rbetarejC(1, alpha, alpha*(nds(k) - 1), lowlim);  
-    	  d1 = nvtemp(0);
-    	  arma::vec loother = rloggamma(nds(k)-1, alpha, 1/alpha);
-    	  loother = loother - log(arma::sum(exp(loother))) + log(D(k)) + log(1 - d1);
-    	  ldvec(M(k))= log(D(k)) + log(d1);
-    	  ldvec.subvec(M(k)+1, M(k+1) - 1) = loother;
-    	}
-      } else {
-    	ldvec(M(k)) = log(D(k));
-      }
-    }
-    //Rprintf(" 2");
-    if(Nover > 0){
-      lowlim = Dbar(nblocks - 1) - D(nblocks - 1);
-      prej = R::pgamma(lowlim, alpha, 1/beta, 1, 0);
-      arma::vec ldover(Nover);
-      if(prej < 0.95){
-    	ldover(0) = log(rgammarej(alpha, 1/beta, lowlim)[0]);
-      } else {
-    	ldover(0) = log(R::qgamma(prej + arma::randu(1)[0]*(1-prej), alpha, 1/beta, 1, 0));
-      }
-      if(Nover > 1){
-    	ldover.subvec(1, Nover-1) = rloggamma(Nover - 1, alpha, 1/beta);
-      }
-      ldvec.subvec(M(nblocks), N(nblocks) - 1) = ldover;
-      mnldvec = mean(ldvec);
-      mnexpldvec = mean(exp(ldvec));
-      for(int k=0; k < nblocks; ++k){
-    	dk1(k) = exp(ldvec(M(k+1)));
-      }
-    } else {
-      ldvec(M(nblocks)) = rloggamma(1, alpha, 1/beta)[0];
-      //ldvec(M(nblocks)) = 0;
-      mnldvec = mean(ldvec);
-      mnexpldvec = mean(exp(ldvec));
-      //mnldvec = mean(ldvec.head(ldvec.size()-1));
-      // mnexpldvec = mean(exp(ldvec.head(ldvec.size()-1)));
-      for(int k=0; k < nblocks; ++k){ //change to nblocks - 1 to go back
-    	dk1(k) = exp(ldvec(M(k+1)));
-      }
-      //dk1(nblocks - 1) = 0;
-    }
-    //Rprintf(" 3\n");
     // N step
-    //Rprintf("N step 1");
+    //Rprintf("     N step 1");
     for(int k = 0; k < nblocks; ++k) {
       if(D(k) + dk1(k) <= Dbar(k)){
      	N(k+1) = M(k+1);
@@ -317,19 +256,80 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
      	N(k + 1) = N(k) + etak;
       }
     }
-    //Rprintf(" 2\n");
+    //Rprintf("      2\n");
     eta = diff(N); // update etas after Ns fully sampled
+    // d step
+    //Rprintf("     d step 1\n");
+    Nover = N(nblocks) - M(nblocks);
+    arma::vec ldvec( (Nover > 0) ? N(nblocks) : M(nblocks) + 1);
+    for(int k = 0; k < nblocks; ++k){
+      if(nds(k) > 1){
+    	if(N(k) == M(k)){
+    	  arma::vec lo = rloggamma(nds(k), alpha, 1);
+    	  lo = lo - lo.max();
+    	  double ldexpsum = log(arma::sum(exp(lo)));
+    	  arma::vec ld = log(D(k)) + lo - ldexpsum;
+    	  ldvec.subvec(M(k), M(k+1)-1) = ld;
+    	} else {
+    	  lowlim = (Dbar(k-1) - D(k-1))/D(k);
+    	  if(lowlim > 1){
+    	    //Rprintf("     k = %i, lowlim = %f, Dk = %f, Dk-1 = %f\n", k, lowlim, D(k-1), D(k));
+    	  }
+    	  // calls from R, slow
+    	  NumericVector nvtemp = rbetarejC(1, alpha, alpha*(nds(k) - 1), lowlim);  
+    	  d1 = nvtemp(0);
+    	  arma::vec loother = rloggamma(nds(k)-1, alpha, 1/alpha);
+    	  loother = loother - log(arma::sum(exp(loother))) + log(D(k)) + log(1 - d1);
+    	  ldvec(M(k))= log(D(k)) + log(d1);
+    	  ldvec.subvec(M(k)+1, M(k+1) - 1) = loother;
+    	}
+      } else {
+    	ldvec(M(k)) = log(D(k));
+      }
+    }
+    //Rprintf("      2");
+    if(Nover > 0){
+      lowlim = Dbar(nblocks - 1) - D(nblocks - 1);
+      prej = R::pgamma(lowlim, alpha, 1/beta, 1, 0);
+      arma::vec ldover(Nover);
+      if(prej < 0.95){
+    	ldover(0) = log(rgammarej(alpha, 1/beta, lowlim)[0]);
+      } else {
+    	ldover(0) = log(R::qgamma(prej + arma::randu(1)[0]*(1-prej), alpha, 1/beta, 1, 0));
+      }
+      if(Nover > 1){
+    	ldover.subvec(1, Nover-1) = rloggamma(Nover - 1, alpha, 1/beta);
+      }
+      //Rprintf("     M %i, N %i, M-N %i \n", M(nblocks), N(nblocks), N(nblocks) - M(nblocks));
+      //Rprintf("     length of ldover %i \n", ldover.n_elem);
+      //Rprintf("     length of ldvec %i \n", ldvec.n_elem);
+      ldvec.subvec(M(nblocks), N(nblocks) - 1) = ldover;
+      mnldvec = mean(ldvec);
+      mnexpldvec = mean(exp(ldvec));
+      for(int k=0; k < nblocks; ++k){
+    	dk1(k) = exp(ldvec(M(k+1)));
+      }
+    } else {
+      ldvec(M(nblocks)) = rloggamma(1, alpha, 1/beta)[0];
+      //ldvec(M(nblocks)) = 0;
+      mnldvec = mean(ldvec);
+      mnexpldvec = mean(exp(ldvec));
+      for(int k=0; k < nblocks; ++k){ 
+    	dk1(k) = exp(ldvec(M(k+1)));
+      }
+    }
+    //Rprintf("      3\n");
     // Dbar step
-    //Rprintf("Dbar step 1\n");
+    //Rprintf("     Dbar step 1\n");
     for(int k = 0; k < nblocks; ++k){
       idxklow = 0;
       while(Dbars(idxklow) < D(k)){
-	idxklow += 0;
+	idxklow += 1;
       }
       idxkhigh = Dbars.size() - 1;
       if(N(k+1) > M(k+1)){
 	while(Dbars(idxkhigh) > D(k) + dk1(k)){
-	  idxkhigh -= 0;
+	  idxkhigh -= 1;
 	}
       }
       arma::vec Dbarproparma = Dbars.subvec(idxklow, idxkhigh);
@@ -338,7 +338,7 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       Dbar(k) = sample(Dbarprop, 1, 1, Dbarprob)[0];
     } 
     // alpha step
-    //Rprintf("alpha and beta step 1\n");
+    //Rprintf("     alpha and beta step 1\n");
     alphaprop = exp(log(alpha) + alpharwsd*arma::randn(1)[0]);
       //      double con1 = N(nblocks)*mnldvec - N(nblocks)*log(bbeta + N(nblocks)*mnexpldvec) - balpha;
       //      latau = (alphaprop - alpha)*con1 + (aalpha - 1)*log(alphaprop/alpha) - 
@@ -354,9 +354,16 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       alpharejs(iter, 0) = 1;
     }
     // beta step
+    if(Nover > 0){
+      //Rprintf("     M %i, N %i, M-N %i \n", M(nblocks), N(nblocks), N(nblocks) - M(nblocks));
+      //Rprintf("     length of ldvec %i \n", ldvec.n_elem);
+      scalebeta = 1/(bbeta + sum(D) + sum(exp(ldvec.subvec(M(nblocks), N(nblocks) - 1))));
+    } else {
+      scalebeta = 1/(bbeta + sum(D));
+    }
     beta = arma::randg(1, arma::distr_param(abeta + alpha*N(nblocks), scalebeta))[0];   
     // assignment step
-    //Rprintf("assignment step 1\n");
+    //Rprintf("     assignment step 1\n");
     draws(iter,0) = sigma;
     draws(iter,1) = phi;
     draws.submat(iter, 2, iter, 3) = gam.t();
@@ -367,9 +374,9 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
     draws.submat(iter, nblocks + 6, iter, 2*nblocks + 5) = tau.t();
     draws.submat(iter, 2*nblocks + 6, iter, 3*nblocks + 5) = Dbar.t();
     // tuning step
-    //Rprintf("tuning step 1\n");
+    //Rprintf("     tuning step 1\n");
     if(tune == 1 && (iter+1) % H == 0){
-      Rprintf("iter %i, tuning!\n", iter);
+      Rprintf("     iter %i, tuning!\n", iter);
       double acctemp;
       arma::vec meantemp1 = trans(mean(taurejs.submat(iter - H + 1, 0, iter, 0))); 
       acctemp = 1 - meantemp1(0);
@@ -403,23 +410,23 @@ List overtrendmcmcCPP(int niter, arma::vec tobs, arma::vec D, arma::uvec M, arma
       alpharwsd = exp(alphalogrwsd);
     }
   }
-  Rprintf("Loop finished, collecting 1");
+  //Rprintf("     Loop finished, collecting 1");
   List initial = List::create(_["sigma"] = sigma, _["phi"] = phi, _["gam"] = gam,
 			      _["alpha"] = alpha, _["beta"] = beta, 
 			      _["N"] = Rcpp::as<Rcpp::NumericVector>(wrap(N)), 
 			      _["tau"] = Rcpp::as<Rcpp::NumericVector>(wrap(tau)), 
 			      _["Dbar"] = Rcpp::as<Rcpp::NumericVector>(wrap(Dbar)));
-  Rprintf(" 2");
+  //Rprintf("      2");
   List rwsds = List::create(_["taulogrwsd"] = taulogrwsd, 
 			    _["gamlogrwsds"] = Rcpp::as<Rcpp::NumericVector>(wrap(gamlogrwsds)),
 			    _["alphalogrwsd"] = alphalogrwsd);
-  Rprintf(" 3");
+  //Rprintf("      3");
   List rejs = List::create(_["taurejs"] = Rcpp::as<Rcpp::NumericMatrix>(wrap(taurejs)), 
 			   _["gamrejs"] = Rcpp::as<Rcpp::NumericMatrix>(wrap(gamrejs)), 
 			   _["alpharejs"] = Rcpp::as<Rcpp::NumericMatrix>(wrap(alpharejs)));
-  Rprintf(" 4\n");
+  //Rprintf("      4\n");
   List out = List::create(_["draws"] = draws, _["initial"] = initial,_["rwsds"] = rwsds, 
 			  _["rejs"] = rejs);
-  Rprintf("collecting finished, outputing\n");
+  //Rprintf("     collecting finished, outputing\n");
   return out;
 }
