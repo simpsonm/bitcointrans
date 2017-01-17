@@ -11,3 +11,6 @@
 data/blocks.csv
 
 data/blocks.Rda
+
+*.RData
+*/auto/*
