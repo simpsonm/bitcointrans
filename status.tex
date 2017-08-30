@@ -1,0 +1,57 @@
+\documentclass[12pt]{article}
+
+\setlength{\oddsidemargin}{-0.125in}
+\setlength{\topmargin}{-0.5in} \setlength{\textwidth}{6.5in}
+\setlength{\textheight}{9in}
+\usepackage{rotating}
+\setlength{\textheight}{9in} \setlength{\textwidth}{6.5in}
+\setlength{\topmargin}{-40pt} \setlength{\oddsidemargin}{0pt}
+\setlength{\evensidemargin}{0pt}
+\usepackage{adjustbox,lipsum}
+\setlength{\textheight}{8.5in} \setlength{\textwidth}{6.5in}
+\setlength{\topmargin}{-36pt} \setlength{\oddsidemargin}{0pt}
+\setlength{\evensidemargin}{0pt} \tolerance=500
+\renewcommand{\baselinestretch}{1.5}
+
+\usepackage{amsmath, amsfonts}
+\usepackage{bm, bbm}
+\usepackage{graphics, graphicx, color, epsf}
+\usepackage[authoryear]{natbib}
+\usepackage{xr, zref, hyperref}
+
+\begin{document}
+\section{Introduction}
+This section describes the current status of the project. In particular, is states the two main models we have and discusses limitations and other problems of both.
+
+\section{The Block Size Model}
+The block size model is the original model we developed. I present a slightly different version of it here with a different measurement error model and a more general process model. Let $k=1,2,\dots,K$ denote blocks in order of arrival on the block chain. Then we model two key quantities: the arrival times of the each block in minutes, denoted by $\tau_k$, and the size of the block in MB, denoted by $d_k$. We directly observe $d_k$, but not $\tau_k$. Rather, we observe $t_k$, a noisy measurement of $\tau_k$ that is restricted to be larger than the median of $\bm{t}_{k-1:11} = (t_{k-11}, t_{k-10}, \dots, t_{k-1})$, which we denote by $m_k$. The measurement error is due to the fact that different computers mine different blocks, and they may not not have perfectly synced internal clocks. As a result, the block chain protocol rejects all blocks that have a reported arrival time that is too early.
+
+In the arrival time measurement error model, we assume that the observed arrival times are normally distributed, centered on the true arrival time, but truncated from below at $m_k$. That is
+\begin{align}
+t_k | \bm{t}_{k-1:11}, \tau_k, \sigma^2 &\stackrel{ind}{\sim}\mathrm{N}(\tau_k, \sigma^2)1(t_k>m_k) && \mbox{(arrival time measurement model)} \label{eq:error}\\
+\intertext{for $k=1,2,\dots,K$. Next, define the block inter-arrival times, $\delta_k = \tau_k - \tau_{k-1}$ for $k=1,2,\dots,K$ where $\tau_0\equiv 0$. The bitcoin protocol is designed so that the blocks follow a Poisson process with intensity $1/10$ per minute. This implies that the inter-arrival times are exponentially distribution with with mean $10$ minutes, i.e.}
+\delta_k = \tau_k - \tau_{k-1} &\stackrel{iid}{\sim}\mathrm{Exp}(1/10) && \mbox{(inter-arrival time process model)}\label{eq:arrival}
+\end{align}
+for $k=1,2,\dots,K$.
+
+Next, we need a model for the block sizes, i.e. the $d_k$s. The longer it takes for a block to arrive, the more transactions and therefore the more transaction data it should accumulate. Let $D(\tau)$ denote the total accumulated transaction data in the block chain. Then $D(\tau)$ we assume that $D(\tau)$ is a nondecreasing L\'{e}vy process, i.e. that $\{D(\tau): \tau > 0\}$ is continuous in $\tau$ with independent, stationary increments. There are many options here, but a convenient L\'{e}vy process is the gamma process, defined by
+\begin{align*}
+D(\tau + \delta) - D(\tau) &\sim \mathrm{G}(\Psi(\tau + \delta) - \Psi(\tau), \theta)
+\end{align*}
+for any time $\tau>0$ and increment $\delta > 0$ where $\Psi(\tau) = \int_0^\tau\psi(u)du$, and $\psi(u)>0$ is the intensity function of the  process. We use the shape/rate parameterization of the gamma distribution so that $\mathrm{E}[D(\tau + \delta) - D(\tau)] = [\Psi(\tau + \delta) - \Psi(\tau)]/\theta$. To fully specify this process model we need to specify the intensity function, but for now we will leave that aside. Given the gamma process for $D(\tau)$, we can define the block size process model. Let $D_k = D(\tau_k)$, $d_k = D_k - D_{k-1}$, and $\psi_k = \Psi(\tau_k)$ for $k=1,2,\dots,K$ where we set $D_0 = D(0) = 0$. Then we assume
+\begin{align}
+d_k | \psi_k, \theta &\stackrel{ind}{\sim}\mathrm{G}(\theta\psi_k, \theta) && \mbox{(block size process model)}\label{eq:size}
+\end{align}
+for $k=1,2,\dots,K$. We parameterize the intensity function and the gamma process so that $\mathrm{E}[d_k|\psi_k,\theta] = \psi_k$, so that the intensity function defines the mean of $d_k$'s gamma distribution.
+
+Equations \eqref{eq:error} - \eqref{eq:size} define the block size model. To complete this model we must specify the intensity function, $\psi(u)$, and priors for all of the unknown parameters. In the original version of the paper we only considered a constant intensity $\psi(u) = \gamma > 0$, though we can also define an increasing intensity $\psi(u) = e^{\beta_0 + u\beta_1}$. In principle we can define any intensity function of the form $\psi(u) = e^{\bm{z}(u)'\bm{\beta}}$ where $\bm{z}(u)$ is a vector of basis functions of time, and $\bm{\beta}$ is a vector of regression coefficients. However, we need to be able to compute the integral $\int_{\tau}^{\tau + \delta}\psi(u)du$ in closed form, which restricts the form of $\psi(u)$. One possibility that I have not explored that may be more flexible is $\psi(u) = \sum_{p=1}^P\alpha_pu^{\beta_p - 1}$ with $\alpha_p, \beta_p>0$ for $p=1,2,\dots,P$.
+
+\subsection{Problems and limitations}
+The big problem with this model, which we identified after we got feedback on the first draft, is that the block size process model does not take into account that excess transactions that arrive during one block spill over into the next block. So all observed block sizes will be lower than the block size limit for that particular block. For example is every block has a 1 MB block size limit, we would never observe a block with more than 1 MB of transactions, even when the limit is routinely being reach. What $d_k$ represents is not the total amount of transaction data that was {\it submitted} to the block chain after block $k-1$ arrived but before block $k$, instead it represents the total amount of transaction data {\it accepted} by the block chain in block $k$.
+
+There is information in the observed data about the spill over. When a block's size is close to the cap, then we know there's a decent chance that at least one transaction was pushed into the next block. There are a couple of problems with this, however: 1) diffwerent bitcoin miners implement different caps, and 2) transaction data comes in discrete chunks. As a consuquence of 2), a block's size can be strictly smaller than the cap and still have spill over transactions, so determining whether a block hit the cap is not as straightforward as seeing whether the block size is the same as the cap size. Further, because of 1) we do not know the cap except for a maximum value, e.g. 1 MB throughout much of bitcoin's history.
+
+We tried to solve this problem with the second model we built. I won't recapitulate it here, but basically we replaced Equation \eqref{eq:size} with 1) a transaction arrival stochastic process, 2) a transaction size model, and 3) incorprated the block size constraints to allow for spillover. This model ended up being very messy and as a result difficult to fit --- I had to write my own MCMC algorithm to fit it. Plus, it seemed to drastically overestimate the probability that a given block has spillover. Because of this, I don't think we should pursue this model.
+
+As an alternative, what we could do is stick with the model we have above and fit a separate model using block sizes (in MB) and block transaction counts in order to estimate the size of a typical transaction. Then we can compare the distribution of transaction sizes to the difference between the oberved block sizes and the cap in order to predict when the cap has been reached. We can do the same thing with the {\it predicted} block sizes, which we can obtain from the posterior predictive distribution of the block size model. This is substantially easier to do.
+\end{document}
