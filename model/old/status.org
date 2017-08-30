@@ -1,0 +1,4 @@
+Status:
+* the C function for the overflow trend model doesn't work right
+  maybe fixed
+* the gamma model doesn't account for overflow very well, we think
